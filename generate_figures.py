@@ -27,6 +27,7 @@ matplotlib.rcParams['hatch.linewidth'] = 0.5
 hatch=r'//'
 
 #matplotlib.rcParams['text.latex.preamble'] = [r'\boldmath \usepackage{bm} \usepackage{xcolor} \setlength{\parindent}{0pt}']
+matplotlib.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
 matplotlib.rcParams.update({'figure.autolayout':True})
 
 rc('text',usetex=True)
@@ -36,118 +37,6 @@ rc('font',family='serif',serif=['Times New Roman'])
 som_color = '#66c2a5'
 pv_color = '#fc8d62'
 
-def ssa_rate():
-    # generate figure for SSA in the rate model
-    
-    fname = 'rate_models/xpp/cols3_ssa.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-
-    # returns tuple (t,u,v1,v2,inits,parameters,tonelist)    
-    control = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-
-    pars['pv_opto']=4
-
-    pv_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    pars['pv_opto']=0
-    pars['som_opto']=2
-    
-    som_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    maxes_u_control,maxes_v1_control,maxes_v2_control = c3_ssa.get_tone_evoked_FR(
-        control['t'],
-        control['u2'],
-        control['p2'],
-        control['s2'],
-        control['tonelist'])
-
-    maxes_u_pv_off,maxes_v1_pv_off,maxes_v2_pv_off = c3_ssa.get_tone_evoked_FR(
-        pv_off['t'],
-        pv_off['u2'],
-        pv_off['p2'],
-        pv_off['s2'],
-        pv_off['tonelist'])
-
-    maxes_u_som_off,maxes_v1_som_off,maxes_v2_som_off = c3_ssa.get_tone_evoked_FR(
-        som_off['t'],
-        som_off['u2'],
-        som_off['p2'],
-        som_off['s2'],
-        som_off['tonelist'])
-
-    
-    gs = gridspec.GridSpec(3, 3)
-    ax11 = plt.subplot(gs[0, 0])
-    ax11.set_title('control')
-
-    ax11.plot(control['t'],control['u2'],label='pyr',color='blue')
-    ax11.plot(control['t'],control['p2'],label='PV',color='green')
-    ax11.plot(control['t'],control['s2'],label='SOM',color='red')
-
-    # plot detected peaks
-    ax11.scatter(maxes_u_control[:,0],maxes_u_control[:,1],color='blue')
-
-    ax11.legend()
-
-    ax21 = plt.subplot(gs[1,0])
-    ax21.set_title('PV off')
-    
-    ax21.plot(pv_off['t'],pv_off['u2'],label='pyr',color='blue')
-    ax21.plot(pv_off['t'],pv_off['p2'],label='PV',color='green')
-    ax21.plot(pv_off['t'],pv_off['s2'],label='SOM',color='red')
-
-    ax21.scatter(maxes_u_pv_off[:,0],maxes_u_pv_off[:,1],color='blue')
-
-    ax31 = plt.subplot(gs[2,0])
-    ax31.set_title('SOM off')
-    
-    ax31.plot(som_off['t'],som_off['u2'],label='pyr',color='blue')
-    ax31.plot(som_off['t'],som_off['p2'],label='PV',color='green')
-    ax31.plot(som_off['t'],som_off['s2'],label='SOM',color='red')
-
-    ax31.scatter(maxes_u_som_off[:,0],maxes_u_som_off[:,1],color='blue')
-
-    
-    # plot relative firing rates
-    ax12 = plt.subplot(gs[:,1])
-    
-    tone_number = np.array([0,1,2,3,4])
-    
-    adapted_fr = maxes_u_control[-1,1]
-    
-    bar_width = 0.2
-    ax12.set_title('Mean FR')
-    ax12.bar(tone_number,maxes_u_control[:,1]/adapted_fr,width=bar_width,label='control',color='blue')
-    ax12.bar(tone_number+bar_width,maxes_u_pv_off[:,1]/adapted_fr,width=bar_width,label='pv_off',color='green')
-    ax12.bar(tone_number+2*bar_width,maxes_u_som_off[:,1]/adapted_fr,width=bar_width,label='som_off',color='red')
-    ax12.plot([0,4],[1,1],ls='--',color='gray')
-
-    ax12.legend()
-    
-    plt.tight_layout()
-
-    # plot diff in firing rates
-    ax13 = plt.subplot(gs[:,2])
-
-    ax13.set_title('Diff from Control')
-    ax13.bar(tone_number,np.abs(maxes_u_control[:,1]-maxes_u_pv_off[:,1])/adapted_fr,width=bar_width,label='control-pv_off',color='green')
-    ax13.bar(tone_number+bar_width,np.abs(maxes_u_control[:,1]-maxes_u_som_off[:,1])/adapted_fr,width=bar_width,label='control-som_off',color='red')
-    #ax13.plot([0,4],[1,1],ls='--',color='gray')
-
-    ax13.legend()
-
-    
-    return fig
 
 
 def r1_responses():
@@ -354,7 +243,7 @@ def r3_responses():
 
 def s1_responses():
 
-    fulldict1 = s1_fs.setup_and_run(single_tone=True,q=.4)
+    fulldict1 = s1_fs.setup_and_run(single_tone=True,q=.2)
     
     stim_arr = fulldict1['stim_arr']
 
@@ -447,7 +336,10 @@ def s1_responses():
     ax32.set_ylabel('SOM Spike Count')
 
     ax41.set_ylabel('Thalamus (nA)')
-    
+
+    ax11.set_yticks([0,800,1600])
+    ax21.set_yticks([0,100,200])
+    ax31.set_yticks([0,100,200])
     
 
     #fig = s1_fs.plot(fulldict1,choice='rasters')
@@ -513,7 +405,9 @@ def r3_s3_pv_full(recompute=False):
     ######################################### spiking model
         
     paradigm = 'pv'
-    seedlist = np.arange(0,20,1)
+    #seedlist = np.arange(0,20,1)
+    seedlist = np.arange(0,10,1)
+    #seedlist = np.arange(0,2,1)
 
     # check if saved results exist
     fname_ctrl = "dat/pv_ctrl_seedlen="+str(len(seedlist))+".dat"
@@ -556,7 +450,7 @@ def r3_s3_pv_full(recompute=False):
         for seed in seedlist:
             fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed,dt=0.1) # control
             #fulldict1 = s3.setup_and_run(pv_opto=-.2,paradigm=paradigm) # PV act
-            fulldict2 = s3.setup_and_run(pv_opto=-.25,paradigm=paradigm,seed=seed,dt=0.1) # PV act
+            fulldict2 = s3.setup_and_run(pv_opto=-.4,paradigm=paradigm,seed=seed,dt=0.1) # PV act
             fulldict2Off = s3.setup_and_run(pv_opto=.5,paradigm=paradigm,seed=seed,dt=0.1) # PV act
 
             # generate PSTH from raster
@@ -812,252 +706,6 @@ def r3_s3_pv_full(recompute=False):
     return fig
 
 
-def r3_s3_pv():
-
-
-    ######################################### rate model
-
-    fname = 'rate_models/xpp/cols3_fs.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-    
-    # run PV activation for correlation calculation.
-    pars['pv_opto']=-.2
-    pars['som_opto']=0.
-    pars['mode']=2
-    
-    pv_on = c3_fs.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-
-
-    # run PV activation for correlation calculation.
-    pars['pv_opto']=0
-    pars['som_opto']=0.
-    pars['mode']=2
-    
-    pv_control = c3_fs.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-
-
-    
-    time = pv_on['t']
-    input_trace = pv_on['sv'][:,pv_on['vn'].index('ia')]
-
-    time_short = time[time<20]
-    input_trace_short = input_trace[time<20]
-
-    time_ctrl = pv_control['t']
-    input_trace_ctrl = pv_control['sv'][:,pv_control['vn'].index('ia')]
-
-    time_short_ctrl = time_ctrl[time_ctrl<20]
-    input_trace_short_ctrl = input_trace_ctrl[time_ctrl<20]
-
-    
-    print "PV control corr = "+str(pearsonr(input_trace_short_ctrl,pv_control['u2'][time_ctrl<20]))
-    print "PV act. corr = "+str(pearsonr(input_trace_short,pv_on['u2'][time<20]))
-
-
-    ######################################### spiking model
-    
-    
-    
-    paradigm = 'pv'
-    #results = np.zeros((3,3)) # ( experiment/iteration #, opto (control/PV/SOM) )
-
-    
-    seedlist = np.arange(0,5,1)
-
-    # (seeds, time array)
-    sol_ctrl_arr = np.zeros((len(seedlist),250))
-    sol_pv_arr = np.zeros((len(seedlist),250))
-    
-    corr_ctrl = np.zeros(len(seedlist))
-    corr_pv = np.zeros(len(seedlist))
-
-    i = 0
-    for seed in seedlist:
-        fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=4) # control
-        #fulldict1 = s3.setup_and_run(pv_opto=-.2,paradigm=paradigm) # PV act
-        fulldict2 = s3.setup_and_run(pv_opto=-.5,paradigm=paradigm,seed=4) # PV act
-
-        # generate PSTH from raster
-        delta = .5*b2.ms
-        fulldict1['spikemon_PYR2'].t
-
-        time = 0*b2.ms
-
-        psth1 = np.zeros(int(fulldict1['T']/delta))
-        psth2 = np.zeros(int(fulldict2['T']/delta))
-
-        counter = 0
-        while time < fulldict1['T']:
-
-            spike_idx1 = (fulldict1['spikemon_PYR2'].t > time)*(fulldict1['spikemon_PYR2'].t <= time+delta)
-            spike_idx2 = (fulldict2['spikemon_PYR2'].t > time)*(fulldict2['spikemon_PYR2'].t <= time+delta)
-
-            psth1[counter] = np.sum(fulldict1['spikemon_PYR2'].t[spike_idx1])/fulldict1['n_pyr']
-            psth2[counter] = np.sum(fulldict2['spikemon_PYR2'].t[spike_idx2])/fulldict2['n_pyr']
-
-            counter += 1
-            time += delta
-
-        psth1 /= delta
-        psth2 /= delta
-
-        x1 = np.linspace(0,fulldict1['T']/b2.ms,len(psth1))
-        x2 = np.linspace(0,fulldict2['T']/b2.ms,len(psth2))
-        x3 = np.linspace(0,fulldict2['T']/b2.ms,len(fulldict1['M_PYR2'].thal2[0]))
-        
-        def thal(x):
-            return interp1d(x3,fulldict1['M_PYR2'].thal2[0]/b2.nA)(x)
-
-        def psth_control(x):
-            x = np.mod(x,x1[-1])
-            return interp1d(x1,psth1)(x)
-
-        def psth_pv(x):
-            x = np.mod(x,x2[-1])
-            return interp1d(x2,psth2)(x)
-
-        #xx = np.linspace(0,fulldict1['T']/b2.ms,len(psth1))
-        xx = np.linspace(0,fulldict1['T']/b2.ms,250)
-
-        #print len(psth1)
-
-        # determine time delay
-        # get all upwards crossings of inhibited rate
-        th_ctrl = .01
-        th_pv = .1
-
-        ctrl_arr = psth_control(xx)
-        pv_arr = psth_pv(xx)
-
-        # mark indices where there is an upward crossing in pv activation case
-        cross_idx_ctrl = (ctrl_arr[1:]>=th_ctrl)*(ctrl_arr[:-1]<th_ctrl)
-        cross_idx_pv = (pv_arr[1:]>=th_pv)*(pv_arr[:-1]<th_pv)
-
-        # mark first time where the upward crossing happens
-        crossing_t_ctrl = xx[1:][cross_idx_ctrl]
-        first_crossing_t_pv = xx[1:][cross_idx_pv]
-        #print first_crossing_t_pv,crossing_t_ctrl
-
-        # find difference between tone onset and first crossing time
-        stim_start_times = np.where(fulldict1['stim_arr2']!=0)[0]*fulldict1['stim_dt'] # stim start time
-
-        diff_t_pv = (first_crossing_t_pv - stim_start_times[0])
-        diff_t_pv = diff_t_pv[np.argmin(np.abs(diff_t_pv))]
-
-        print 'PV response delay',diff_t_pv
-        sol_ctrl_arr[i,:] = psth_control(xx)
-        sol_pv_arr[i,:] = psth_pv(xx+diff_t_pv)
-
-        corr_ctrl[i] = pearsonr(thal(xx),psth_control(xx))[0]
-        corr_pv[i] = pearsonr(thal(xx),psth_pv(xx+diff_t_pv))[0]
-        #print 'correlation thal-control, thal-pv act', pearsonr(thal(xx),psth_control(xx))[0],pearsonr(thal(xx),psth_pv(xx+diff_t_pv))[0]
-
-        i += 1
-    
-    ctrl_mean = np.mean(sol_ctrl_arr,axis=0)
-    ctrl_dev = np.std(sol_ctrl_arr,axis=0)
-
-    pv_mean = np.mean(sol_pv_arr,axis=0)
-    pv_dev = np.std(sol_pv_arr,axis=0)
-
-    corr_ctrl_mean = np.mean(corr_ctrl)
-    corr_ctrl_std = np.std(corr_ctrl)
-
-    corr_pv_mean = np.mean(corr_pv)
-    corr_pv_std = np.std(corr_pv)
-
-    print 'corr ctrl mean', corr_ctrl_mean,corr_ctrl_std
-    print 'corr pv mean', corr_pv_mean,corr_pv_std
-
-
-    fig = plt.figure(figsize=(6,3))
-    
-    ax11 = fig.add_subplot(121)
-    ax12 = fig.add_subplot(122);ax1b = ax12.twinx()
-    
-    #ax2 = fig.add_subplot(312)
-    #ax3 = fig.add_subplot(313)
-    
-    ######################################### rate plots
-
-    ax11b = ax11.twinx()
-    ax11b.plot(time_short_ctrl*10,input_trace_short_ctrl,color='tab:red')
-    ax11.plot(time_short_ctrl*10,pv_control['u2'][time_ctrl<20],color='k',lw=2,label='Control')
-    ax11.plot(time_short*10,pv_on['u2'][pv_on['t']<20],color=pv_color,lw=3,label='PV Act.',ls='--',zorder=3)
-    
-    
-
-    ax11.set_title('Pyr Control FR Rate')
-    ax11.set_ylabel('Firing Rate')
-    #ax11b.set_ylabel('Thalamus',color='tab:red')
-
-
-    #ax11.set_title('Pyr FR Rate with PV Activation')
-    
-    
-    ######################################### spike plots
-    
-    
-
-    
-    ax1b.plot(x3,fulldict1['M_PYR2'].thal2[0]/b2.nA,color='tab:red',label='Thalamus')
-    
-    #ax11.plot(xx,psth_pv(xx+diff_t_pv),label='PV Act.',color=pv_color,lw=2)
-
-    ax12.plot(xx,ctrl_mean,label='Control',color='k',lw=2)
-    ax12.fill_between(xx,ctrl_mean-ctrl_dev,ctrl_mean+ctrl_dev,facecolor='k',alpha=.25)
-    
-    ax12.plot(xx,pv_mean,label='PV Act.',color=pv_color,lw=3,ls='--',zorder=3)
-    ax12.fill_between(xx,pv_mean-pv_dev,pv_mean+pv_dev,facecolor=pv_color,alpha=.25,zorder=3)
-            
-    
-    #ax2.scatter(fulldict1['spikemon_PYR2'].t/b2.ms, fulldict1['spikemon_PYR2'].i,color='k',s=1)
-    #ax3.scatter(fulldict2['spikemon_PYR2'].t/b2.ms-diff_t_pv, fulldict2['spikemon_PYR2'].i,color=pv_color,s=1)
-
-    ax11.set_title(r'\textbf{A} $\quad$ Rate model',x=.5)
-    ax12.set_title(r'\textbf{B} $\quad$ Spiking model',x=.5)
-    #ax2.set_title(r'\textbf{B}',x=0)
-    #ax3.set_title(r'\textbf{C}',x=0)
-
-    ax11b.tick_params(axis='y',labelcolor='tab:red')
-    ax1b.tick_params(axis='y',labelcolor='tab:red')
-
-    ax12.set_xlim(0,fulldict1['T']/b2.ms)
-    #ax2.set_xlim(0,fulldict1['T']/b2.ms)
-    #ax3.set_xlim(0,fulldict1['T']/b2.ms)
-
-    ax11.set_xlim(80,150)
-    ax21.set_xlim(80,150)
-    
-    ax12.set_xlim(120,190)
-    ax22.set_xlim(120,190)
-    #ax2.set_xlim(120,190)
-    #ax3.set_xlim(120,190)
-    
-    #ax3.set_xlabel('Time (ms)')
-
-    ax11.set_ylabel('Pyr Firing Rate')
-    ax21.set_ylabel('Pyr Firing Rate')
-    #ax11b.set_ylabel('Thalamus',color='tab:red')
-    #ax12.set_ylabel('Pyr Firing Rate')
-    ax1b.set_ylabel('Thalamus',color='tab:red')
-    
-
-    ax11.set_xlabel('Time (ms)')
-    ax12.set_xlabel('Time (ms)')    
-    #ax2.set_ylabel('Pyr Neuron Index')
-    #ax3.set_ylabel('Pyr Neuron Index')    
-
-    ax11.legend()
-    
-    return fig
 
 def r1_adaptation():
     """
@@ -1276,755 +924,10 @@ def r1_adaptation():
     return fig
 
 
-def r3_ssa():
 
-    # dummy stimulation list for figure
-    np.random.seed(0)
-    pos_list = np.random.rand(30)
-    
-    standard_tone = -.25
-    deviant_tone = 0.25
-    deviant_idxs = pos_list>.95
-    
-    pos_list[deviant_idxs] = deviant_tone # 10% of tones are deviant (.25)
-    pos_list[np.logical_not(deviant_idxs)] = standard_tone # 90% of tones are standard (-.25)
 
-    vals = np.unique(pos_list) # get unique list of positions for later
-    assert(len(vals) == 2) # this experiment is only for 2 tones
-    #pos_list = [-1,1]
 
-    tone_on_list = np.arange(len(pos_list),dtype=int)*40+30 # tone on times
-    tone_dur_list = np.ones(len(tone_on_list),dtype=int)*10
-    
-    fname = 'rate_models/xpp/cols3_ssa.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-
-    # returns tuple (t,u,v1,v2,inits,parameters,tonelist)    
-    control = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-
-    pars['pv_opto']=4
-
-    pv_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    pars['pv_opto']=0
-    pars['som_opto']=2
-    
-    som_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    maxes_u_control,maxes_v1_control,maxes_v2_control = c3_ssa.get_tone_evoked_FR(
-        control['t'],
-        control['u2'],
-        control['p2'],
-        control['s2'],
-        control['tonelist'])
-
-    maxes_u_pv_off,maxes_v1_pv_off,maxes_v2_pv_off = c3_ssa.get_tone_evoked_FR(
-        pv_off['t'],
-        pv_off['u2'],
-        pv_off['p2'],
-        pv_off['s2'],
-        pv_off['tonelist'])
-
-    maxes_u_som_off,maxes_v1_som_off,maxes_v2_som_off = c3_ssa.get_tone_evoked_FR(
-        som_off['t'],
-        som_off['u2'],
-        som_off['p2'],
-        som_off['s2'],
-        som_off['tonelist'])
-
-
-    fig = plt.figure(figsize=(4,4),constrained_layout=True)
-    gs = gridspec.GridSpec(3, 2,figure=fig)
-    #gs = fig.add_gridspec(3,4)
-    #gs = gridspec.GridSpec(3, 3)
-    ax11 = plt.subplot(gs[0, :2])
-    #ax11.set_title('control')
-
-    ax21 = plt.subplot(gs[1:,0])
-    ax22 = plt.subplot(gs[1:,1])
-
-    gs.update(hspace=1,wspace=.5)
-    
-
-    #ax23 = plt.subplot(gs[1:,2])
-    #ax24 = plt.subplot(gs[1:,3])
-
-    ax11.set_title(r'\textbf{A}',x=0)
-    ax21.set_title(r'\textbf{B}',x=0)
-    ax22.set_title(r'\textbf{C}',x=0)
-    #ax23.set_title(r'\textbf{C} \quad SOM-Cre',x=0)
-
-    ax11.scatter(tone_on_list[pos_list>0]*10,pos_list[pos_list>0],color='red',label='Deviant Tone')
-    ax11.scatter(tone_on_list[pos_list<0]*10,pos_list[pos_list<0],color='gray',label='Standard Tone')
-    
-    #ax11.spines['bottom'].set_position('center')
-    ax11.spines['left'].set_visible(False)
-    ax11.spines['right'].set_visible(False)
-    ax11.spines['top'].set_visible(False)
-    ax11.set_yticks([])
-    
-    ax11.set_xlabel('Time (ms)')
-    ax11.set_ylim(-.3,.3)
-
-    #plt.tight_layout()
-    ax11.legend(bbox_to_anchor=(.5, 1.45), loc='upper center', borderaxespad=0.,ncol=2)
-    #ax11.legend()
-
-    
-
-    bar_wide = 0.4
-    
-    tone_number = np.arange(-1,5)
-    #adapted_fr = standard_FR_control4#maxes_u_control[-1,1]
-    
-    tone_number = np.array([0,1,2,3,4])
-    
-    adapted_fr = maxes_u_control[-1,1]
-
-    alpha = .4
-    bar_width = 0.25
-        
-    ax21.bar(0-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][0]/adapted_fr,width=bar_width,label='Control',color='black')
-    ax21.bar(1-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][1]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(2-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][2]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(3-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][3]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(4-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][4]/adapted_fr,width=bar_width,color='black')
-
-    ax21.bar(-bar_width/2.+0+bar_width/2.,maxes_u_pv_off[:,1][0]/adapted_fr,
-             width=bar_width,label='PV Off',color=pv_color,edgecolor='k',hatch=hatch)
-    ax21.bar(-bar_width/2.+1+bar_width/2.,maxes_u_pv_off[:,1][1]/adapted_fr,
-             width=bar_width,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax21.bar(-bar_width/2.+2+bar_width/2.,maxes_u_pv_off[:,1][2]/adapted_fr,
-             width=bar_width,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax21.bar(-bar_width/2.+3+bar_width/2.,maxes_u_pv_off[:,1][3]/adapted_fr,
-             width=bar_width,facecolor=pv_color,edgecolor='k',hatch=hatch)    
-    ax21.bar(-bar_width/2.+4+bar_width/2.,maxes_u_pv_off[:,1][4]/adapted_fr,
-             width=bar_width,facecolor=pv_color,edgecolor='k',hatch=hatch)
-
-    ax21.bar(bar_width/2.+0+bar_width/2.,maxes_u_som_off[:,1][0]/adapted_fr,width=bar_width,label='SOM Off',facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+1+bar_width/2.,maxes_u_som_off[:,1][1]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+2+bar_width/2.,maxes_u_som_off[:,1][2]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+3+bar_width/2.,maxes_u_som_off[:,1][3]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+4+bar_width/2.,maxes_u_som_off[:,1][4]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-
-
-    #ax21.bar(tone_number,maxes_u_control[:,1]/adapted_fr,width=bar_width,label='control',color='gray')
-    #ax21.bar(tone_number+bar_width,maxes_u_pv_off[:,1]/adapted_fr,width=bar_width,label='pv_off',color='gray',alpha=alpha)
-
-    
-    ax21.set_xlabel('Post-Deviant Tone \#')
-    ax21.set_ylabel('Normalized Mean FR')
-    
-    ax21.set_xlim(-.5,4.5)
-    ax21.set_ylim(0,2.5)
-    
-    ax21.spines['right'].set_visible(False)
-    ax21.spines['top'].set_visible(False)    
-    ax21.xaxis.set_ticks_position('bottom')
-    ax21.yaxis.set_ticks_position('left')
-
-    ax21.set_xticks(np.arange(0,5))
-    
-    #ax22.bar(tone_number,np.abs(maxes_u_control[:,1]-maxes_u_pv_off[:,1])/adapted_fr,width=bar_width,label='control-pv_off',color='gray')
-    
-    ax22.bar(0-bar_wide/2,np.abs(maxes_u_control[:,1][0]-maxes_u_pv_off[:,1][0])/adapted_fr,label='PV Off',width=bar_wide,color=pv_color)
-    ax22.bar(1-bar_wide/2,np.abs(maxes_u_control[:,1][1]-maxes_u_pv_off[:,1][1])/adapted_fr,width=bar_wide,color=pv_color)
-    ax22.bar(2-bar_wide/2,np.abs(maxes_u_control[:,1][2]-maxes_u_pv_off[:,1][2])/adapted_fr,width=bar_wide,color=pv_color)
-    ax22.bar(3-bar_wide/2,np.abs(maxes_u_control[:,1][3]-maxes_u_pv_off[:,1][3])/adapted_fr,width=bar_wide,color=pv_color)
-    ax22.bar(4-bar_wide/2,np.abs(maxes_u_control[:,1][4]-maxes_u_pv_off[:,1][4])/adapted_fr,width=bar_wide,color=pv_color)
-
-    
-    y = np.abs(maxes_u_control[:,1]-maxes_u_som_off[:,1])/adapted_fr
-
-    ax22.bar(0+bar_wide/2.,y[0],width=bar_wide,color=som_color,label='SOM Off')
-    ax22.bar(1+bar_wide/2.,y[1],width=bar_wide,color=som_color)
-    ax22.bar(2+bar_wide/2.,y[2],width=bar_wide,color=som_color)
-    ax22.bar(3+bar_wide/2.,y[3],width=bar_wide,color=som_color)
-    ax22.bar(4+bar_wide/2.,y[4],width=bar_wide,color=som_color)
-
-    
-    ax22.set_xlabel('Post-Deviant Tone \#')
-    ax22.set_ylabel('Mean FR Change')
-    ax22.set_ylim(0,1)
-    ax22.set_xlim(-.5,4.5)
-    
-    ax22.spines['right'].set_visible(False)
-    ax22.spines['top'].set_visible(False)    
-    ax22.yaxis.set_ticks_position('left')
-    ax22.xaxis.set_ticks_position('bottom')
-
-    ax22.set_xticks(np.arange(0,5))
-
-    ax21.legend(prop={'size': 6})
-    ax22.legend(prop={'size': 6})
-
-    return fig
-
-def s3_ssa():
-    
-    paradigm = 'ssa'
-    seed = 4
-    
-    fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed)
-    fulldict2 = s3.setup_and_run(pv_opto=.2,paradigm=paradigm,seed=seed)#fulldict2 = setup_and_run(pv_opto=.3)
-    fulldict3 = s3.setup_and_run(som_opto=1.,paradigm=paradigm,seed=seed)
-
-    n = fulldict1['n_pyr']
-    
-    FR_control_pyr2,dev_control_pyr2,spike_control_pyr2 = s3.collect_FR_dev(fulldict1['stim_arr1']+fulldict1['stim_arr3'],
-                                    fulldict1['stim_dt'],
-                                    fulldict1['defaultclock'],
-                                    fulldict1['spikemon_PYR2'],n)
-    
-    FR_pvoff_pyr2,dev_pvoff_pyr2,spike_pvoff_pyr2 = s3.collect_FR_dev(fulldict2['stim_arr1']+fulldict2['stim_arr3'],
-                                  fulldict2['stim_dt'],
-                                  fulldict2['defaultclock'],
-                                  fulldict2['spikemon_PYR2'],n)
-    
-    FR_somoff_pyr2,dev_somoff_pyr2,spike_somoff_pyr2 = s3.collect_FR_dev(fulldict3['stim_arr1']+fulldict3['stim_arr3'],
-                                   fulldict3['stim_dt'],
-                                   fulldict3['defaultclock'],
-                                   fulldict3['spikemon_PYR2'],n)
-
-    # get std deviation for spike differences
-    pvdiff = np.abs(spike_pvoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-    somdiff = np.abs(spike_somoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-
-    pvdiff_err = np.std(pvdiff,axis=0)
-    somdiff_err = np.std(somdiff,axis=0)
-    
-    fig = plt.figure()
-    gs = gridspec.GridSpec(1,2)
-
-    ax11 = plt.subplot(gs[0,0]) # psth control
-    ax12 = plt.subplot(gs[0,1]) # plot FR
-
-    bin_factor = 1./2
-
-    tone_number1 = np.arange(len(np.where((fulldict1['stim_arr1']+fulldict1['stim_arr3'])!=0)[0]))
-    adapted_fr = 1#FR_control_pyr2[-1]
-
-    #print dev_control_pyr2
-
-    print pvdiff_err,somdiff_err
-    
-    bar_width = 0.2
-    ax11.set_title('Mean FR')
-    ax11.bar(tone_number1[4:],FR_control_pyr2[4:]/adapted_fr,width=bar_width,color='black',yerr=dev_control_pyr2[4:])
-    ax11.bar(tone_number1[4:]+bar_width,FR_pvoff_pyr2[4:]/adapted_fr,width=bar_width,color=pv_color,yerr=dev_pvoff_pyr2[4:])
-    ax11.bar(tone_number1[4:]+2*bar_width,FR_somoff_pyr2[4:]/adapted_fr,width=bar_width,color=som_color,yerr=dev_somoff_pyr2[4:])
-
-    #ax12.plot([0,4],[1,1],ls='--',color='gray')
-    #ax22.plot([0,4],[1,1],ls='--',color='gray')
-
-    ax12.set_title('Diff from Control')
-    ax12.bar(tone_number1[4:],np.abs(FR_control_pyr2-FR_pvoff_pyr2)[4:]/adapted_fr,
-             width=bar_width,label='control-pv_off',color=pv_color,yerr=pvdiff_err)
-    ax12.bar(tone_number1[4:]+bar_width,np.abs(FR_control_pyr2-FR_somoff_pyr2)[4:]/adapted_fr,
-             width=bar_width,label='control-som_off',color=som_color,yerr=somdiff_err)
-
-
-    return fig
-
-
-
-def r3_s3_ssa(recompute=False):
-
-    # dummy stimulation list for figure
-    np.random.seed(0)
-    pos_list = np.random.rand(30)
-    
-    standard_tone = -.25
-    deviant_tone = 0.25
-    deviant_idxs = pos_list>.95
-    
-    pos_list[deviant_idxs] = deviant_tone # 10% of tones are deviant (.25)
-    pos_list[np.logical_not(deviant_idxs)] = standard_tone # 90% of tones are standard (-.25)
-
-    vals = np.unique(pos_list) # get unique list of positions for later
-    assert(len(vals) == 2) # this experiment is only for 2 tones
-    #pos_list = [-1,1]
-
-    tone_on_list = np.arange(len(pos_list),dtype=int)*40+30 # tone on times
-    tone_dur_list = np.ones(len(tone_on_list),dtype=int)*10
-    
-    fname = 'rate_models/xpp/cols3_ssa.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-
-    # returns tuple (t,u,v1,v2,inits,parameters,tonelist)    
-    control = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-
-    pars['pv_opto']=4
-
-    pv_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    pars['pv_opto']=0
-    pars['som_opto']=2
-    
-    som_off = c3_ssa.run_experiment(
-        fname,
-        pars,inits,
-        return_all=True)
-    
-    maxes_u_control,maxes_v1_control,maxes_v2_control = c3_ssa.get_tone_evoked_FR(
-        control['t'],
-        control['u2'],
-        control['p2'],
-        control['s2'],
-        control['tonelist'])
-
-    maxes_u_pv_off,maxes_v1_pv_off,maxes_v2_pv_off = c3_ssa.get_tone_evoked_FR(
-        pv_off['t'],
-        pv_off['u2'],
-        pv_off['p2'],
-        pv_off['s2'],
-        pv_off['tonelist'])
-
-    maxes_u_som_off,maxes_v1_som_off,maxes_v2_som_off = c3_ssa.get_tone_evoked_FR(
-        som_off['t'],
-        som_off['u2'],
-        som_off['p2'],
-        som_off['s2'],
-        som_off['tonelist'])
-
-
-    fig = plt.figure(figsize=(8,4),constrained_layout=True)
-    gs = gridspec.GridSpec(3, 4,figure=fig)
-    #gs = fig.add_gridspec(3,4)
-    #gs = gridspec.GridSpec(3, 3)
-    ax11 = plt.subplot(gs[0, :2])
-    #ax11.set_title('control')
-
-    ax21 = plt.subplot(gs[1:,0])
-    ax22 = plt.subplot(gs[1:,1])
-
-    ax23 = plt.subplot(gs[1:,2])
-    ax24 = plt.subplot(gs[1:,3])
-
-    gs.update(hspace=1,wspace=.5)
-    
-
-    #ax23 = plt.subplot(gs[1:,2])
-    #ax24 = plt.subplot(gs[1:,3])
-
-
-    ax11.scatter(tone_on_list[pos_list>0]*10,pos_list[pos_list>0],color='red',label='Deviant Tone')
-    ax11.scatter(tone_on_list[pos_list<0]*10,pos_list[pos_list<0],color='gray',label='Standard Tone')
-    
-
-    bar_wide = 0.4
-    
-    tone_number = np.arange(-1,5)
-    #adapted_fr = standard_FR_control4#maxes_u_control[-1,1]
-    
-    tone_number = np.array([0,1,2,3,4])
-    
-    adapted_fr = maxes_u_control[-1,1]
-
-    alpha = .4
-    bar_width = 0.25
-        
-    ax21.bar(0-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][0]/adapted_fr,width=bar_width,label='Control',color='black')
-    ax21.bar(1-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][1]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(2-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][2]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(3-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][3]/adapted_fr,width=bar_width,color='black')
-    ax21.bar(4-1.5*bar_width+bar_width/2.,maxes_u_control[:,1][4]/adapted_fr,width=bar_width,color='black')
-
-    ax21.bar(-bar_width/2.+0+bar_width/2.,maxes_u_pv_off[:,1][0]/adapted_fr,width=bar_width,label='PV Off',facecolor=pv_color,hatch=hatch,edgecolor='k')
-    ax21.bar(-bar_width/2.+1+bar_width/2.,maxes_u_pv_off[:,1][1]/adapted_fr,width=bar_width,facecolor=pv_color,hatch=hatch,edgecolor='k')
-    ax21.bar(-bar_width/2.+2+bar_width/2.,maxes_u_pv_off[:,1][2]/adapted_fr,width=bar_width,facecolor=pv_color,hatch=hatch,edgecolor='k')
-    ax21.bar(-bar_width/2.+3+bar_width/2.,maxes_u_pv_off[:,1][3]/adapted_fr,width=bar_width,facecolor=pv_color,hatch=hatch,edgecolor='k')    
-    ax21.bar(-bar_width/2.+4+bar_width/2.,maxes_u_pv_off[:,1][4]/adapted_fr,width=bar_width,facecolor=pv_color,hatch=hatch,edgecolor='k')
-
-    ax21.bar(bar_width/2.+0+bar_width/2.,maxes_u_som_off[:,1][0]/adapted_fr,width=bar_width,label='SOM Off',facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+1+bar_width/2.,maxes_u_som_off[:,1][1]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+2+bar_width/2.,maxes_u_som_off[:,1][2]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+3+bar_width/2.,maxes_u_som_off[:,1][3]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-    ax21.bar(bar_width/2.+4+bar_width/2.,maxes_u_som_off[:,1][4]/adapted_fr,width=bar_width,facecolor=som_color,edgecolor='k')
-
-
-    #ax21.bar(tone_number,maxes_u_control[:,1]/adapted_fr,width=bar_width,label='control',color='gray')
-    #ax21.bar(tone_number+bar_width,maxes_u_pv_off[:,1]/adapted_fr,width=bar_width,label='pv_off',color='gray',alpha=alpha)
-
-    
-
-    
-    
-    #ax22.bar(tone_number,np.abs(maxes_u_control[:,1]-maxes_u_pv_off[:,1])/adapted_fr,width=bar_width,label='control-pv_off',color='gray')
-    
-    ax22.bar(0-bar_wide/2,np.abs(maxes_u_control[:,1][0]-maxes_u_pv_off[:,1][0])/adapted_fr,label='PV Off',width=bar_wide,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax22.bar(1-bar_wide/2,np.abs(maxes_u_control[:,1][1]-maxes_u_pv_off[:,1][1])/adapted_fr,width=bar_wide,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax22.bar(2-bar_wide/2,np.abs(maxes_u_control[:,1][2]-maxes_u_pv_off[:,1][2])/adapted_fr,width=bar_wide,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax22.bar(3-bar_wide/2,np.abs(maxes_u_control[:,1][3]-maxes_u_pv_off[:,1][3])/adapted_fr,width=bar_wide,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    ax22.bar(4-bar_wide/2,np.abs(maxes_u_control[:,1][4]-maxes_u_pv_off[:,1][4])/adapted_fr,width=bar_wide,facecolor=pv_color,edgecolor='k',hatch=hatch)
-    
-    y = np.abs(maxes_u_control[:,1]-maxes_u_som_off[:,1])/adapted_fr
-
-    ax22.bar(0+bar_wide/2.,y[0],width=bar_wide,facecolor=som_color,label='SOM Off',edgecolor='k')
-    ax22.bar(1+bar_wide/2.,y[1],width=bar_wide,facecolor=som_color,edgecolor='k')
-    ax22.bar(2+bar_wide/2.,y[2],width=bar_wide,facecolor=som_color,edgecolor='k')
-    ax22.bar(3+bar_wide/2.,y[3],width=bar_wide,facecolor=som_color,edgecolor='k')
-    ax22.bar(4+bar_wide/2.,y[4],width=bar_wide,facecolor=som_color,edgecolor='k')
-
-    paradigm = 'ssa'
-
-
-    seed = 0
-
-
-    
-    seedlist = np.arange(0,3,1)
-    
-    # check if saved results exist
-    fname_ctrl = "dat/ssa_ctrl_seedlen="+str(len(seedlist))+".dat"
-    fname_pv_off = "dat/ssa_pv_off_seedlen="+str(len(seedlist))+".dat"
-    fname_som_off = "dat/ssa_som_off_seedlen="+str(len(seedlist))+".dat"
-
-    fname_pv_on = "dat/ssa_pv_on_seedlen="+str(len(seedlist))+".dat"
-    fname_som_on = "dat/ssa_som_on_seedlen="+str(len(seedlist))+".dat"
-
-    # get std deviation for spike differences
-    #pvdiff = np.abs(spike_pvoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-    #somdiff = np.abs(spike_somoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-
-    fname_pv_off_diff = "dat/ssa_pv_off_diff_seedlen="+str(len(seedlist))+".dat"
-    fname_som_off_diff = "dat/ssa_som_off_diff_seedlen="+str(len(seedlist))+".dat"
-    
-    fname_pv_on_diff = "dat/ssa_pv_on_diff_seedlen="+str(len(seedlist))+".dat"
-    fname_som_on_diff = "dat/ssa_som_on_diff_seedlen="+str(len(seedlist))+".dat"
-
-    
-    if os.path.isfile(fname_ctrl) and \
-       os.path.isfile(fname_pv_off) and os.path.isfile(fname_som_off) and \
-       os.path.isfile(fname_pv_off_diff) and os.path.isfile(fname_som_off_diff) and \
-       os.path.isfile(fname_pv_on) and os.path.isfile(fname_som_on) and \
-       os.path.isfile(fname_pv_on_diff) and os.path.isfile(fname_som_on_diff) and \
-       not(recompute):
-        
-        results_ctrl = np.loadtxt(fname_ctrl)
-        results_pv_off = np.loadtxt(fname_pv_off)
-        results_som_off = np.loadtxt(fname_som_off)
-
-        results_pv_on = np.loadtxt(fname_pv_on)
-        results_som_on = np.loadtxt(fname_som_on)
-
-        results_pv_off_diff = np.loadtxt(fname_pv_off_diff)
-        results_som_off_diff = np.loadtxt(fname_som_off_diff)
-
-        results_pv_on_diff = np.loadtxt(fname_pv_on_diff)
-        results_som_on_diff = np.loadtxt(fname_som_on_diff)
-
-    else:
-        
-        results_ctrl = np.zeros((len(seedlist),5)) # ( seed #, expt/column #) )
-        results_pv_off = np.zeros((len(seedlist),5))
-        results_som_off = np.zeros((len(seedlist),5))
-
-        results_pv_on = np.zeros((len(seedlist),5))
-        results_som_on = np.zeros((len(seedlist),5))
-
-        results_pv_off_diff = np.zeros((len(seedlist),5))
-        results_som_off_diff = np.zeros((len(seedlist),5))
-
-        results_pv_on_diff = np.zeros((len(seedlist),5))
-        results_som_on_diff = np.zeros((len(seedlist),5))
-
-        
-        i = 0
-
-        for seed in seedlist:
-            print 'seed',seed
-            fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed)
-            fulldict2 = s3.setup_and_run(pv_opto=.2,paradigm=paradigm,seed=seed)#fulldict2 = setup_and_run(pv_opto=.3)
-            fulldict3 = s3.setup_and_run(som_opto=1.,paradigm=paradigm,seed=seed)
-
-            #fulldict1On = s3.setup_and_run(paradigm=paradigm,seed=seed)
-            fulldict2On = s3.setup_and_run(pv_opto=-.2,paradigm=paradigm,seed=seed)#fulldict2 = setup_and_run(pv_opto=.3)
-            fulldict3On = s3.setup_and_run(som_opto=-.5,paradigm=paradigm,seed=seed)
-
-            n = fulldict1['n_pyr']
-
-            FR_control_pyr2,dev_control_pyr2,spike_control_pyr2 = s3.collect_FR_dev(
-                fulldict1['stim_arr1']+fulldict1['stim_arr3'],
-                fulldict1['stim_dt'],
-                fulldict1['defaultclock'],
-                fulldict1['spikemon_PYR2'],n)
-
-            FR_pvoff_pyr2,dev_pvoff_pyr2,spike_pvoff_pyr2 = s3.collect_FR_dev(
-                fulldict2['stim_arr1']+fulldict2['stim_arr3'],
-                fulldict2['stim_dt'],
-                fulldict2['defaultclock'],
-                fulldict2['spikemon_PYR2'],n)
-
-            FR_somoff_pyr2,dev_somoff_pyr2,spike_somoff_pyr2 = s3.collect_FR_dev(
-                fulldict3['stim_arr1']+fulldict3['stim_arr3'],
-                fulldict3['stim_dt'],
-                fulldict3['defaultclock'],
-                fulldict3['spikemon_PYR2'],n)
-            
-            FR_pvon_pyr2,dev_pvon_pyr2,spike_pvon_pyr2 = s3.collect_FR_dev(
-                fulldict2On['stim_arr1']+fulldict2On['stim_arr3'],
-                fulldict2On['stim_dt'],
-                fulldict2On['defaultclock'],
-                fulldict2On['spikemon_PYR2'],n)
-
-            FR_somon_pyr2,dev_somon_pyr2,spike_somon_pyr2 = s3.collect_FR_dev(
-                fulldict3On['stim_arr1']+fulldict3On['stim_arr3'],
-                fulldict3On['stim_dt'],
-                fulldict3On['defaultclock'],
-                fulldict3On['spikemon_PYR2'],n)
-
-
-            # get std deviation for spike differences
-
-            results_ctrl[i,:] = FR_control_pyr2[4:]
-            results_pv_off[i,:] = FR_pvoff_pyr2[4:]
-            results_som_off[i,:] = FR_somoff_pyr2[4:]
-            
-            results_pv_on[i,:] = FR_pvon_pyr2[4:]
-            results_som_on[i,:] = FR_somon_pyr2[4:]
-
-            results_pv_off_diff[i,:] = np.mean(np.abs(spike_pvoff_pyr2[:,4:] - spike_control_pyr2[:,4:]),axis=0)
-            results_som_off_diff[i,:] = np.mean(np.abs(spike_somoff_pyr2[:,4:] - spike_control_pyr2[:,4:]),axis=0)
-            
-            results_pv_on_diff[i,:] = np.mean(np.abs(spike_pvon_pyr2[:,4:] - spike_control_pyr2[:,4:]),axis=0)
-            results_som_on_diff[i,:] = np.mean(np.abs(spike_somon_pyr2[:,4:] - spike_control_pyr2[:,4:]),axis=0)
-
-
-            i += 1
-
-        np.savetxt(fname_ctrl,results_ctrl)
-        np.savetxt(fname_pv_off,results_pv_off)
-        np.savetxt(fname_som_off,results_som_off)
-        
-        np.savetxt(fname_pv_on,results_pv_on)
-        np.savetxt(fname_som_on,results_som_on)
-        
-        
-        np.savetxt(fname_pv_off_diff,results_pv_off_diff)
-        np.savetxt(fname_som_off_diff,results_som_off_diff)
-        
-        np.savetxt(fname_pv_on_diff,results_pv_on_diff)
-        np.savetxt(fname_som_on_diff,results_som_on_diff)
-    
-
-
-    #pvdiff_err = np.std(pvdiff,axis=0)
-    #somdiff_err = np.std(somdiff,axis=0)
-
-    bin_factor = 1./2
-
-    tone_number1 = np.arange(0,9,1)#np.arange(len(np.where((fulldict1['stim_arr1']+fulldict1['stim_arr3'])!=0)[0]))
-    adapted_fr = results_ctrl[0,-1]#FR_control_pyr2[-1]
-
-    #print pvdiff_err,somdiff_err
-
-    mean_ctrl = np.mean(results_ctrl,axis=0)
-    std_ctrl = np.std(results_ctrl,axis=0)
-    
-    mean_pv_off = np.mean(results_pv_off,axis=0)
-    std_pv_off = np.std(results_pv_off,axis=0)
-    
-    mean_som_off = np.mean(results_som_off,axis=0)
-    std_som_off = np.std(results_som_off,axis=0)
-
-    mean_pv_on = np.mean(results_pv_on,axis=0)
-    std_pv_on = np.std(results_pv_on,axis=0)
-    
-    mean_som_on = np.mean(results_som_on,axis=0)
-    std_som_on = np.std(results_som_on,axis=0)
-
-    mean_pv_off_diff = np.mean(results_pv_off_diff,axis=0)
-    std_pv_off_diff = np.std(results_pv_off_diff,axis=0)
-
-    mean_pv_on_diff = np.mean(results_pv_on_diff,axis=0)
-    std_pv_on_diff = np.std(results_pv_on_diff,axis=0)
-
-    mean_som_on_diff = np.mean(results_som_on_diff,axis=0)
-    std_som_on_diff = np.std(results_som_on_diff,axis=0)
-
-    mean_som_off_diff = np.mean(results_som_off_diff,axis=0)
-    std_som_off_diff = np.std(results_som_off_diff,axis=0)
-
-
-    ############################## spiking model plots INACTIVATION
-    ax23.bar(tone_number1[4:]-4-1.5*bar_width+bar_width/2.,mean_ctrl,
-             width=bar_width,color='black',yerr=[(0,0,0,0,0),std_ctrl],
-             error_kw=dict(lw=1, capsize=1, capthick=1))
-    ax23.bar(tone_number1[4:]-4,mean_pv_off,
-             width=bar_width,facecolor=pv_color,yerr=[(0,0,0,0,0),std_pv_off],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k',hatch=hatch)
-    ax23.bar(tone_number1[4:]-4+bar_width,mean_som_off,
-             width=bar_width,facecolor=som_color,yerr=[(0,0,0,0,0),std_som_off],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k')
-
-    #ax12.plot([0,4],[1,1],ls='--',color='gray')
-    #ax22.plot([0,4],[1,1],ls='--',color='gray')
-
-    
-    ax24.bar(tone_number1[4:]-4-bar_wide/2,mean_pv_off-mean_ctrl,
-             width=bar_wide,label='control-pv_off',facecolor=pv_color,yerr=[(0,0,0,0,0),(std_ctrl+std_pv_off)/2.],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k',hatch=hatch)
-    ax24.bar(tone_number1[4:]-4+bar_wide/2,mean_som_off-mean_ctrl,
-             width=bar_wide,label='control-som_off',facecolor=som_color,yerr=[(0,0,0,0,0),(std_ctrl+std_som_off)/2.],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k')
-
-
-    """
-    fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed)
-    fulldict2 = s3.setup_and_run(pv_opto=.2,paradigm=paradigm,seed=seed)#fulldict2 = setup_and_run(pv_opto=.3)
-    fulldict3 = s3.setup_and_run(som_opto=1.,paradigm=paradigm,seed=seed)
-
-    n = fulldict1['n_pyr']
-    
-    FR_control_pyr2,dev_control_pyr2,spike_control_pyr2 = s3.collect_FR_dev(fulldict1['stim_arr1']+fulldict1['stim_arr3'],
-                                    fulldict1['stim_dt'],
-                                    fulldict1['defaultclock'],
-                                    fulldict1['spikemon_PYR2'],n)
-    
-    FR_pvoff_pyr2,dev_pvoff_pyr2,spike_pvoff_pyr2 = s3.collect_FR_dev(fulldict2['stim_arr1']+fulldict2['stim_arr3'],
-                                  fulldict2['stim_dt'],
-                                  fulldict2['defaultclock'],
-                                  fulldict2['spikemon_PYR2'],n)
-    
-    FR_somoff_pyr2,dev_somoff_pyr2,spike_somoff_pyr2 = s3.collect_FR_dev(fulldict3['stim_arr1']+fulldict3['stim_arr3'],
-                                   fulldict3['stim_dt'],
-                                   fulldict3['defaultclock'],
-                                   fulldict3['spikemon_PYR2'],n)
-
-    # get std deviation for spike differences
-    pvdiff = np.abs(spike_pvoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-    somdiff = np.abs(spike_somoff_pyr2[:,4:] - spike_control_pyr2[:,4:])
-
-    pvdiff_err = np.std(pvdiff,axis=0)
-    somdiff_err = np.std(somdiff,axis=0)
-
-    bin_factor = 1./2
-
-    tone_number1 = np.arange(len(np.where((fulldict1['stim_arr1']+fulldict1['stim_arr3'])!=0)[0]))
-    adapted_fr = FR_control_pyr2[-1]
-
-    #print dev_control_pyr2
-
-    print pvdiff_err,somdiff_err
-
-    ############################## spiking model plots
-    ax23.bar(tone_number1[4:]-4-1.5*bar_width+bar_width/2.,FR_control_pyr2[4:]/adapted_fr,
-             width=bar_width,color='black',yerr=[(0,0,0,0,0),dev_control_pyr2[4:]/adapted_fr],
-             error_kw=dict(lw=1, capsize=1, capthick=1))
-    ax23.bar(tone_number1[4:]-4,FR_pvoff_pyr2[4:]/adapted_fr,
-             width=bar_width,facecolor=pv_color,yerr=[(0,0,0,0,0),dev_pvoff_pyr2[4:]/adapted_fr],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k',hatch=hatch)
-    ax23.bar(tone_number1[4:]-4+bar_width,FR_somoff_pyr2[4:]/adapted_fr,
-             width=bar_width,facecolor=som_color,yerr=[(0,0,0,0,0),dev_somoff_pyr2[4:]/adapted_fr],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k')
-
-    #ax12.plot([0,4],[1,1],ls='--',color='gray')
-    #ax22.plot([0,4],[1,1],ls='--',color='gray')
-
-    
-    ax24.bar(tone_number1[4:]-4-bar_wide/2,np.abs(FR_control_pyr2-FR_pvoff_pyr2)[4:]/adapted_fr,
-             width=bar_wide,label='control-pv_off',facecolor=pv_color,yerr=[(0,0,0,0,0),pvdiff_err/adapted_fr],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k',hatch=hatch)
-    ax24.bar(tone_number1[4:]-4+bar_wide/2,np.abs(FR_control_pyr2-FR_somoff_pyr2)[4:]/adapted_fr,
-             width=bar_wide,label='control-som_off',facecolor=som_color,yerr=[(0,0,0,0,0),somdiff_err/adapted_fr],
-             error_kw=dict(lw=1, capsize=1, capthick=1),edgecolor='k')
-
-    """
-    
-    ax21.set_xlabel('Post-Deviant Tone \#')
-    ax22.set_xlabel('Post-Deviant Tone \#')
-    ax23.set_xlabel('Post-Deviant Tone \#')
-    ax24.set_xlabel('Post-Deviant Tone \#')
-    
-    ax21.set_ylabel('Normalized Mean FR')
-    ax22.set_ylabel('Mean FR Change')    
-    ax23.set_ylabel('Normalized Mean FR')
-    ax24.set_ylabel('Mean FR Change')
-
-    ax11.set_title(r'\textbf{A}',x=0)
-    ax21.set_title(r'\textbf{B}',x=0)
-    ax22.set_title(r'\textbf{C}',x=0)
-    ax23.set_title(r'\textbf{D}',x=0)
-    ax24.set_title(r'\textbf{E}',x=0)
-
-
-    #ax11.spines['bottom'].set_position('center')
-    ax11.spines['left'].set_visible(False)
-    ax11.spines['right'].set_visible(False)
-    ax11.spines['top'].set_visible(False)
-    ax11.set_yticks([])
-    
-    ax11.set_xlabel('Time (ms)')
-    ax11.set_ylim(-.3,.3)
-
-    #plt.tight_layout()
-    
-    #ax11.legend()    
-    
-    ax21.spines['right'].set_visible(False)
-    ax21.spines['top'].set_visible(False)    
-    ax21.xaxis.set_ticks_position('bottom')
-    ax21.yaxis.set_ticks_position('left')
-
-    ax22.spines['right'].set_visible(False)
-    ax22.spines['top'].set_visible(False)    
-    ax22.yaxis.set_ticks_position('left')
-    ax22.xaxis.set_ticks_position('bottom')
-
-    ax23.spines['right'].set_visible(False)
-    ax23.spines['top'].set_visible(False)    
-    ax23.xaxis.set_ticks_position('bottom')
-    ax23.yaxis.set_ticks_position('left')
-
-    ax24.spines['right'].set_visible(False)
-    ax24.spines['top'].set_visible(False)    
-    ax24.xaxis.set_ticks_position('bottom')
-    ax24.yaxis.set_ticks_position('left')
-
-    ax21.set_ylim(0,2.5)
-    ax22.set_ylim(0,1)
-    #ax23.set_ylim(0,4)
-    #ax24.set_ylim(0,1.2)
-
-    ax21.set_xlim(-.5,4.5)
-    ax22.set_xlim(-.5,4.5)
-    ax23.set_xlim(-.5,4.5)
-    ax24.set_xlim(-.5,4.5)
-    
-
-    ax21.set_xticks(np.arange(0,5))
-    ax22.set_xticks(np.arange(0,5))
-    ax23.set_xticks(np.arange(0,5))
-    ax24.set_xticks(np.arange(0,5))
-    
-
-    ax11.legend(bbox_to_anchor=(.5, 1.45), loc='upper center', borderaxespad=0.,ncol=2,prop={'size': 6})
-    ax21.legend(prop={'size': 6})
-    ax22.legend(prop={'size': 6})
-
-    return fig
-
-
-
-def r3_s3_ssa_full(recompute=False):
+def r3_s3_ssa_full(recompute=True):
 
     # dummy stimulation list for figure
     np.random.seed(0)
@@ -2198,7 +1101,8 @@ def r3_s3_ssa_full(recompute=False):
     paradigm = 'ssa'
     #seed = 0
 
-    seedlist = np.arange(0,3,1)
+    #seedlist = np.arange(0,3,1)
+    seedlist = np.arange(0,2,1)
     
     # check if saved results exist
     fname_ctrl = "dat/ssa_ctrl_seedlen="+str(len(seedlist))+".dat"
@@ -2508,255 +1412,6 @@ def r3_s3_ssa_full(recompute=False):
 
 
 
-def r3_s3_fs(recompute=False):
-
-    ############################################# rate model
-    
-    fname = 'rate_models/xpp/cols3_fs.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-
-    # repeat simulation for different frequencies.
-    # pars['mode'] = '1' makes the first tone appear in the first column
-    # pars['mode'] = '2' makes the first tone appear in the second column.. etc.
-
-    results = np.zeros((3,6))
-    
-    for i in range(3):
-        pars['mode']=str(i+1)
-
-        pars['pv_opto']=0
-        pars['som_opto']=0
-
-        # returns tuple (t,u,v1,v2,inits,parameters,tonelist)    
-        control = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        pars['pv_opto']=.1#.01
-
-        pv_off = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        pars['pv_opto']=0
-        pars['som_opto']=.2
-
-        som_off = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        
-        # get first max u (i), second max u (u2).
-        # get first max u with pv opto (i), second max u with pv opto (u2).
-        # get first max u with som opto (i), second max u with som opto (u2).
-
-        # get tone list stard and end index for first and second tones
-        # get tone list times
-        
-        tone1On,tone1Off = control['tonelist'][0]
-        tone2On,tone2Off = control['tonelist'][1]
-        
-        idx1_start = np.argmin(np.abs(control['t']-tone1On))+1 # first time interval index
-        idx1_end = np.argmin(np.abs(control['t']-tone1Off))-1
-
-        idx2_start = np.argmin(np.abs(control['t']-tone2On))+1 # second time interval index
-        idx2_end = np.argmin(np.abs(control['t']-tone2Off))-1
-        
-        # get first tone (varies as a function of i)
-        control1 = c3_fs.get_max_FR(control['u'+str(i+1)],idx1_start,idx1_end)
-        pv1 = c3_fs.get_max_FR(pv_off['u'+str(i+1)],idx1_start,idx1_end)
-        som1 = c3_fs.get_max_FR(som_off['u'+str(i+1)],idx1_start,idx1_end)
-        
-        # get second tone (always u2)
-        control2 = c3_fs.get_max_FR(control['u2'],idx2_start,idx2_end)
-        pv2 = c3_fs.get_max_FR(pv_off['u2'],idx2_start,idx2_end)
-        som2 = c3_fs.get_max_FR(som_off['u2'],idx2_start,idx2_end)
-        
-        results[i,:] = [control1,control2,pv1,pv2,som1,som2]
-
-        # end 3 tone loop
-
-
-    ############################################# spiking model
-    paradigms = ['fs1','fs2','fs3']
-    seedlist = np.arange(0,20,1)
-    
-    # check if saved results exist
-    fname_ctrl = "dat/fs_ctrl_seedlen="+str(len(seedlist))+".dat"
-    fname_pv = "dat/fs_pv_seedlen="+str(len(seedlist))+".dat"
-    fname_som = "dat/fs_som_seedlen="+str(len(seedlist))+".dat"
-    
-    if os.path.isfile(fname_ctrl) and os.path.isfile(fname_pv) and os.path.isfile(fname_som) and not(recompute):
-        results_ctrl = np.loadtxt(fname_ctrl)
-        results_pv = np.loadtxt(fname_pv)
-        results_som = np.loadtxt(fname_som)
-
-    else:
-
-        results_ctrl = np.zeros((len(seedlist),3)) # ( seed #, expt/column #) )
-        results_pv = np.zeros((len(seedlist),3))
-        results_som = np.zeros((len(seedlist),3))
-
-        i = 0
-        for seed in seedlist:
-            for paradigm in paradigms:                
-
-                fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed)
-                fulldict2 = s3.setup_and_run(pv_opto=.3,paradigm=paradigm,seed=seed)#fulldict2 = setup_and_run(pv_opto=.3)
-                fulldict3 = s3.setup_and_run(som_opto=1.,paradigm=paradigm,seed=seed)
-                
-                suffix = paradigm[-1]
-
-                bin_factor = 1./2
-
-                start_time1 = 160
-                start_time2 = 230
-                interval_time = 50
-
-                # 50-60...90-100,  start_time2-130...160-170    
-                control_pa = s3.get_FR(start_time1,start_time1+interval_time,fulldict1['defaultclock'],fulldict1['spikemon_PYR'+suffix].t,fulldict1['n_pyr'])
-                control_fs = s3.get_FR(start_time2,start_time2+interval_time,fulldict1['defaultclock'],fulldict1['spikemon_PYR2'].t,fulldict1['n_pyr'])
-
-                pv_pa = s3.get_FR(start_time1,start_time1+interval_time,fulldict2['defaultclock'],fulldict2['spikemon_PYR'+suffix].t,fulldict1['n_pyr'])
-                pv_fs = s3.get_FR(start_time2,start_time2+interval_time,fulldict2['defaultclock'],fulldict2['spikemon_PYR2'].t,fulldict1['n_pyr'])
-
-                som_pa = s3.get_FR(start_time1,start_time1+interval_time,fulldict3['defaultclock'],fulldict3['spikemon_PYR'+suffix].t,fulldict1['n_pyr'])
-                som_fs = s3.get_FR(start_time2,start_time2+interval_time,fulldict3['defaultclock'],fulldict3['spikemon_PYR2'].t,fulldict1['n_pyr'])
-
-                control = control_fs/control_pa
-                pv_off = pv_fs/pv_pa
-                som_off = som_fs/som_pa
-
-                #results[int(suffix)-1,:] = [control,pv_off,som_off]
-                results_ctrl[i,int(suffix)-1] = control
-                results_pv[i,int(suffix)-1] = pv_off
-                results_som[i,int(suffix)-1] = som_off
-
-                if paradigm == 'fs2':
-                    print('control,pvoff,somoff:',control,pv_off,som_off,'seed,paradigm',seed,paradigm)
-            i += 1
-
-        np.savetxt(fname_ctrl,results_ctrl)
-        np.savetxt(fname_pv,results_pv)
-        np.savetxt(fname_som,results_som)
-
-
-    print results_ctrl
-    print results_pv
-    print results_som
-
-
-    fig = plt.figure(figsize=(6,6))
-    gs = gridspec.GridSpec(2,2)
-    
-    ax11 = plt.subplot(gs[0,0]) # psth control
-    ax12 = plt.subplot(gs[0,1]) # psth pvoff
-    ax21 = plt.subplot(gs[1,0]) # psth pvoff
-    ax22 = plt.subplot(gs[1,1]) # psth pvoff
-
-
-    markersize = 4
-    marker = 'o'
-    ################################################## rate model plots
-        
-    bar_width = 0.2
-    #ax11.set_title('Peak Response')
-    #ax11.scatter(0,maxes_u_control[0,1],label='Control 1st Tone',color='black')
-    #ax11.scatter(0,maxes_u_pv_off[0,1],label='',color=pv_color)
-
-    #ax11.set_title('Normalized Peak Response (2nd Tone)')
-
-    x = [-1,0,1]
-    
-    control_probe = results[1,0]
-    ax11.plot(x,results[:,1]/control_probe,label='Control 2nd Tone',color='black',marker=marker,markersize=markersize)
-
-    pv_probe = results[1,2]
-    ax11.plot(x,results[:,3]/pv_probe,label='PV Off 2nd Tone',color=pv_color,marker=marker,markersize=markersize,ls='--')
-
-    #ax12.set_title('Normalized Peak Response (2nd Tone)')
-
-    control_probe = results[1,0]    
-    ax12.plot(x,results[:,1]/control_probe,label='Control 2nd Tone',color='black',marker=marker,markersize=markersize)
-
-    som_probe = results[1,4]
-    ax12.plot(x,results[:,5]/som_probe,label='SOM Off 2nd Tone',color=som_color,marker=marker,markersize=markersize)
-
-    
-    #ax11.plot()
-    
-    #ax11.set_xlabel('Distance from Preferred Frequency')
-    #ax12.set_xlabel('Distance from Preferred Frequency')
-    
-    
-    #plt.tight_layout()
-
-
-    ################################################### spiking model plots
-
-
-    
-
-    freqs = np.array([-1,0,1])
-
-    mean_ctrl = np.mean(results_ctrl,axis=0)
-    std_ctrl = np.std(results_ctrl,axis=0)
-    
-    mean_pv = np.mean(results_pv,axis=0)
-    std_pv = np.std(results_pv,axis=0)
-    
-    mean_som = np.mean(results_som,axis=0)
-    std_som = np.std(results_som,axis=0)
-
-    print mean_ctrl,mean_pv,mean_som
-    print std_ctrl,std_pv,std_som
-
-    shift = 0.02
-    
-    #ax21.set_title('Normalized Peak Response (2nd Tone)')
-    ax21.plot(freqs+shift,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize) # plot control over all tones
-    ax21.errorbar(freqs+shift,mean_ctrl,yerr=std_ctrl,label='Control 2nd Tone',color='black',
-             lw=1, capsize=1, capthick=1) # plot control over all tones
-
-    ax21.plot(freqs,mean_pv,color=pv_color,lw=2,marker=marker,markersize=markersize,ls='--')
-    ax21.errorbar(freqs,mean_pv,yerr=std_pv,label='PV Off 2nd Tone',color=pv_color,
-                  lw=1, capsize=1, capthick=1,zorder=3,ls='--') # plot PV off over all tones
-    ax21.set_xlabel('Distance from preferred frequency')
-
-    #ax22.set_title('Normalized Peak Response (2nd Tone)')
-    
-    ax22.plot(freqs+shift,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize)
-    ax22.errorbar(freqs+shift,mean_ctrl,yerr=std_ctrl,label='Control 2nd Tone',color='black',
-             lw=1, capsize=1, capthick=1) # plot control over all tones
-
-    ax22.plot(freqs,mean_som,color=som_color,lw=2,marker=marker,markersize=markersize)
-    ax22.errorbar(freqs,mean_som,yerr=std_som,label='SOM Off 2nd Tone',color=som_color,
-                  lw=1, capsize=1, capthick=1,zorder=3) # plot SOM off over all tones
-    ax22.set_xlabel('Distance from preferred frequency')
-
-    ax11.set_ylabel('Pyr Firing Rate (Rate Model)')
-    ax21.set_ylabel('Pyr Firing Rate (Spiking Model)')
-    
-    ax11.set_xticks(x)
-    ax12.set_xticks(x)
-    ax21.set_xticks(x)
-    ax22.set_xticks(x)
-
-    ax11.legend(loc='center left')
-    ax12.legend(loc='center left')
-
-    ax11.set_title(r'\textbf{A}',x=0)
-    ax12.set_title(r'\textbf{B}',x=0)
-    ax21.set_title(r'\textbf{C}',x=0)
-    ax22.set_title(r'\textbf{D}',x=0)
-    
-
-    
-    return fig
 
 
 
@@ -2858,7 +1513,8 @@ def r3_s3_fs_full(recompute=False):
 
     ############################################# spiking model
     paradigms = ['fs1','fs2','fs3']
-    seedlist = np.arange(0,30,1)
+    #seedlist = np.arange(0,30,1)
+    seedlist = np.arange(0,2,1)
     
     # check if saved results exist
     fname_ctrl = "dat/fs_ctrl_seedlen="+str(len(seedlist))+".dat"
@@ -3275,12 +1931,13 @@ def r3_CSI_params():
     # control param values
     pars = read_pars_values_from_file('rate_models/xpp/cols3_ssa.ode')
 
-    ax11.scatter(float(pars['pv_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
-    ax12.scatter(float(pars['som_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
-    ax21.scatter(float(pars['pv_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
-    ax22.scatter(float(pars['som_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
+    # add negative to be consistent with paper.
+    ax11.scatter(-float(pars['pv_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
+    ax12.scatter(-float(pars['som_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
+    ax21.scatter(-float(pars['pv_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
+    ax22.scatter(-float(pars['som_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
 
-    # get approx CSI at control locations
+    # get approx CSI at control locations. no negative needed here
     x11_idx = np.argmin(abs(x11-float(pars['pv_opto'])));y11_idx = np.argmin(abs(y11[::-1]-float(pars['wee'])));
     x12_idx = np.argmin(abs(x12-float(pars['som_opto'])));y12_idx = np.argmin(abs(y12[::-1]-float(pars['wee'])));
     x21_idx = np.argmin(abs(x21-float(pars['pv_opto'])));y21_idx = np.argmin(abs(y21[::-1]-float(pars['taud1'])));
@@ -3292,10 +1949,10 @@ def r3_CSI_params():
     print 'CSI sol22 control',sol22[y22_idx,x22_idx]
 
     # plot opto locations
-    ax11.scatter(4,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax12.scatter(2,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax21.scatter(4,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax22.scatter(2,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax11.scatter(-4,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax12.scatter(-2,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax21.scatter(-4,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax22.scatter(-2,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
     
     # get approx CSI at opto locations
     x11_idx_opt = np.argmin(abs(x11-4));y11_idx_opt = np.argmin(abs(y11[::-1]-float(pars['wee'])));
@@ -3310,10 +1967,10 @@ def r3_CSI_params():
 
     
     # plot opto locations
-    ax11.scatter(-.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax12.scatter(-.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax21.scatter(-.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax22.scatter(-.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax11.scatter(.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax12.scatter(.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax21.scatter(.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax22.scatter(.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
 
     # get approx CSI at opto activation locations
     x11_idx_opt_act = np.argmin(abs(x11+.5));y11_idx_opt_act = np.argmin(abs(y11[::-1]-float(pars['wee'])));
@@ -3327,18 +1984,29 @@ def r3_CSI_params():
     print 'CSI sol22 opto act.',sol22[y22_idx_opt_act,x22_idx_opt_act]
 
     
-    im11 = ax11.imshow(sol11,extent = [x11[0],x11[-1],y11[0],y11[-1]],aspect='auto')
-    im12 = ax12.imshow(sol12,extent = [x12[0],x12[-1],y12[0],y12[-1]],aspect='auto')
-    im21 = ax21.imshow(sol21,extent = [x21[0],x21[-1],y21[0],y21[-1]],aspect='auto')
-    im22 = ax22.imshow(sol22,extent = [x22[0],x22[-1],y22[0],y22[-1]],aspect='auto')
+    #im11 = ax11.imshow(sol11,extent = [x11[0],x11[-1],y11[0],y11[-1]],aspect='auto')
+    #im12 = ax12.imshow(sol12,extent = [x12[0],x12[-1],y12[0],y12[-1]],aspect='auto')
+    #im21 = ax21.imshow(sol21,extent = [x21[0],x21[-1],y21[0],y21[-1]],aspect='auto')
+    #im22 = ax22.imshow(sol22,extent = [x22[0],x22[-1],y22[0],y22[-1]],aspect='auto')
 
+    im11 = ax11.imshow(sol11[:,::-1],extent = [-x11[-1],-x11[0],y11[0],y11[-1]],aspect='auto')
+    im12 = ax12.imshow(sol12[:,::-1],extent = [-x12[-1],-x12[0],y12[0],y12[-1]],aspect='auto')
+    im21 = ax21.imshow(sol21[:,::-1],extent = [-x21[-1],-x21[0],y21[0],y21[-1]],aspect='auto')
+    im22 = ax22.imshow(sol22[:,::-1],extent = [-x22[-1],-x22[0],y22[0],y22[-1]],aspect='auto')
+
+    
+
+    
     
     
     fig.colorbar(im11,ax=ax11)
-    fig.colorbar(im12,ax=ax12)
+    c12 = fig.colorbar(im12,ax=ax12)
     fig.colorbar(im21,ax=ax21)
-    fig.colorbar(im22,ax=ax22)
+    c22 = fig.colorbar(im22,ax=ax22)
 
+    c12.set_label('CSI Index')
+    c22.set_label('CSI Index')
+    
     ax11.set_title(r'\textbf{A}',x=0)
     ax12.set_title(r'\textbf{B}',x=0)
     ax21.set_title(r'\textbf{C}',x=0)
@@ -3356,14 +2024,13 @@ def r3_CSI_params():
     #ax22.set_ylim(y22[0],y22[-1])
 
     #print y11[0]
-
+    #'$I_\text{Opt,SOM}=1.2$'
 
     ax11.set_ylabel(r'$w_{ee}$')
     ax21.set_ylabel(r'$\tau_{d_1}$')
-    ax21.set_xlabel('PV Opto')
-    ax22.set_xlabel('SOM Opto')
-    
-    
+    ax21.set_xlabel(r'$I_\text{Opt,PV}$')
+    ax22.set_xlabel(r'$I_\text{Opt,SOM}$')
+        
     plt.tight_layout()
 
     return fig
@@ -3503,10 +2170,10 @@ def s3_CSI_params():
     #pars = read_pars_values_from_file('rate_models/xpp/cols3_ssa.ode')
     pars = {'pv_opto':0,'som_opto':0,'wee':1.,'taud1':1000}
 
-    ax11.scatter(float(pars['pv_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
-    ax12.scatter(float(pars['som_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
-    ax21.scatter(float(pars['pv_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
-    ax22.scatter(float(pars['som_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
+    ax11.scatter(-float(pars['pv_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
+    ax12.scatter(-float(pars['som_opto']),float(pars['wee']),color='white',zorder=2,edgecolor='black')
+    ax21.scatter(-float(pars['pv_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
+    ax22.scatter(-float(pars['som_opto']),float(pars['taud1']),color='white',zorder=2,edgecolor='black')
 
     # get approx CSI at control locations
     x11_idx = np.argmin(abs(x11-float(pars['pv_opto'])));y11_idx = np.argmin(abs(y11[::-1]-float(pars['wee'])));
@@ -3520,10 +2187,10 @@ def s3_CSI_params():
     print 'CSI sol22 control',sol22[y22_idx,x22_idx]
 
     # plot opto locations
-    ax11.scatter(.2,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax12.scatter(1,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax21.scatter(.2,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
-    ax22.scatter(1,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax11.scatter(-.2,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax12.scatter(-1,float(pars['wee']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax21.scatter(-.2,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
+    ax22.scatter(-1,float(pars['taud1']),color='white',zorder=2,marker='^',edgecolor='black')
     
     # get approx CSI at opto locations
     x11_idx_opt = np.argmin(abs(x11-1));y11_idx_opt = np.argmin(abs(y11[::-1]-float(pars['wee'])));
@@ -3538,10 +2205,10 @@ def s3_CSI_params():
 
     
     # plot opto locations
-    ax11.scatter(-.2,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax12.scatter(-.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax21.scatter(-.2,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
-    ax22.scatter(-.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax11.scatter(.2,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax12.scatter(.5,float(pars['wee']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax21.scatter(.2,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
+    ax22.scatter(.5,float(pars['taud1']),color='white',zorder=2,marker='s',edgecolor='black')
 
     # get approx CSI at opto activation locations
     x11_idx_opt_act = np.argmin(abs(x11+.5));y11_idx_opt_act = np.argmin(abs(y11[::-1]-float(pars['wee'])));
@@ -3558,17 +2225,20 @@ def s3_CSI_params():
     print 'CSI sol22 opto act.',sol22[y22_idx_opt_act,x22_idx_opt_act]
 
     
-    im11 = ax11.imshow(sol11,extent = [x11[0],x11[-1],y11[0],y11[-1]],aspect='auto')
-    im12 = ax12.imshow(sol12,extent = [x12[0],x12[-1],y12[0],y12[-1]],aspect='auto')
-    im21 = ax21.imshow(sol21,extent = [x21[0],x21[-1],y21[0],y21[-1]],aspect='auto')
-    im22 = ax22.imshow(sol22,extent = [x22[0],x22[-1],y22[0],y22[-1]],aspect='auto')
+    im11 = ax11.imshow(sol11[:,::-1],extent = [x11[-1],x11[0],y11[0],y11[-1]],aspect='auto')
+    im12 = ax12.imshow(sol12[:,::-1],extent = [x12[-1],x12[0],y12[0],y12[-1]],aspect='auto')
+    im21 = ax21.imshow(sol21[:,::-1],extent = [x21[-1],x21[0],y21[0],y21[-1]],aspect='auto')
+    im22 = ax22.imshow(sol22[:,::-1],extent = [x22[-1],x22[0],y22[0],y22[-1]],aspect='auto')
 
     
     
     fig.colorbar(im11,ax=ax11)
-    fig.colorbar(im12,ax=ax12)
+    c12 = fig.colorbar(im12,ax=ax12)
     fig.colorbar(im21,ax=ax21)
-    fig.colorbar(im22,ax=ax22)
+    c22 = fig.colorbar(im22,ax=ax22)
+
+    c12.set_label('CSI Index')
+    c22.set_label('CSI Index')
 
     ax11.set_title(r'\textbf{A}',x=0)
     ax12.set_title(r'\textbf{B}',x=0)
@@ -3591,8 +2261,12 @@ def s3_CSI_params():
 
     ax11.set_ylabel(r'$w_{ee}$')
     ax21.set_ylabel(r'$\tau_{d_1}$')
-    ax21.set_xlabel('PV Opto')
-    ax22.set_xlabel('SOM Opto')
+
+    ax21.set_xlabel(r'$I_\text{Opt,PV}$')
+    ax22.set_xlabel(r'$I_\text{Opt,SOM}$')
+
+    #ax21.set_xlabel('PV Opto')
+    #ax22.set_xlabel('SOM Opto')
     
     
     
@@ -3603,310 +2277,6 @@ def s3_CSI_params():
 
     return fig
 
-def r3_s3_tuning(recompute=False):
-
-    fname = 'rate_models/xpp/cols3_tuning.ode'
-    pars = read_pars_values_from_file(fname)
-    inits = read_init_values_from_file(fname)
-
-    ############################################## pv opto varying sim of rate model
-
-
-    ################################################## direct sim for rate model
-
-    # repeat simulation for different frequencies.
-    # pars['mode'] = '1' makes the first tone appear in the first column
-    # pars['mode'] = '2' makes the first tone appear in the second column.. etc.
-
-    results = np.zeros((3,6))
-    
-    for i in range(3):
-        pars['mode']=str(i+1)
-
-        pars['pv_opto']=0
-        pars['som_opto']=0
-
-        # returns tuple (t,u,v1,v2,inits,parameters,tonelist)    
-        control = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        pars['pv_opto']=5
-
-        pv_off = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        pars['pv_opto']=0
-        pars['som_opto']=2
-
-        som_off = c3_fs.run_experiment(
-            fname,
-            pars,inits,
-            return_all=True)
-
-        
-        # get first max u (i), second max u (u2).
-        # get first max u with pv opto (i), second max u with pv opto (u2).
-        # get first max u with som opto (i), second max u with som opto (u2).
-
-        # get tone list stard and end index for first and second tones
-        # get tone list times
-        
-        tone1On,tone1Off = control['tonelist'][0]
-        tone5On,tone5Off = control['tonelist'][4]
-        
-        idx1_start = np.argmin(np.abs(control['t']-tone1On))+1 # first time interval index
-        idx1_end = np.argmin(np.abs(control['t']-tone1Off))-1
-
-        idx2_start = np.argmin(np.abs(control['t']-tone5On))+1 # last time interval index
-        idx2_end = np.argmin(np.abs(control['t']-tone5Off))-1
-        
-        # get first tone response at u2
-        control1 = c3_fs.get_max_FR(control['u2'],idx1_start,idx1_end)
-        pv1 = c3_fs.get_max_FR(pv_off['u2'],idx1_start,idx1_end)
-        som1 = c3_fs.get_max_FR(som_off['u2'],idx1_start,idx1_end)
-
-        
-        # get last tone tone response at u2
-        control2 = c3_fs.get_max_FR(control['u2'],idx2_start,idx2_end)
-        pv2 = c3_fs.get_max_FR(pv_off['u2'],idx2_start,idx2_end)
-        som2 = c3_fs.get_max_FR(som_off['u2'],idx2_start,idx2_end)
-
-        #print 'control1',control1,'control2',control2,i
-        
-        results[i,:] = [control1,control2,pv1,pv2,som1,som2]
-
-
-
-
-
-    ################################################ spiking
-    
-    seedlist = np.arange(0,2,1)
-    
-    # check if saved results exist
-    fname_ctrl1 = "dat/tuning_ctrl1_seedlen="+str(len(seedlist))+".dat"
-    fname_pv1 = "dat/tuning_pv1_seedlen="+str(len(seedlist))+".dat"
-    fname_som1 = "dat/tuning_som1_seedlen="+str(len(seedlist))+".dat"
-
-    fname_ctrl2 = "dat/tuning_ctrl2_seedlen="+str(len(seedlist))+".dat"
-    fname_pv2 = "dat/tuning_pv2_seedlen="+str(len(seedlist))+".dat"
-    fname_som2 = "dat/tuning_som2_seedlen="+str(len(seedlist))+".dat"    
-
-    if os.path.isfile(fname_ctrl1) and os.path.isfile(fname_pv1) and os.path.isfile(fname_som1) and \
-       os.path.isfile(fname_ctrl2) and os.path.isfile(fname_pv2) and os.path.isfile(fname_som2) and \
-       not(recompute):
-        results_ctrl1 = np.loadtxt(fname_ctrl1)
-        results_pv1 = np.loadtxt(fname_pv1)
-        results_som1 = np.loadtxt(fname_som1)
-
-        results_ctrl2 = np.loadtxt(fname_ctrl2)
-        results_pv2 = np.loadtxt(fname_pv2)
-        results_som2 = np.loadtxt(fname_som2)
-        
-    else:
-        results_ctrl1 = np.zeros((len(seedlist),3))
-        results_pv1 = np.zeros((len(seedlist),3))
-        results_som1 = np.zeros((len(seedlist),3))
-
-        results_ctrl2 = np.zeros((len(seedlist),3))
-        results_pv2 = np.zeros((len(seedlist),3))
-        results_som2 = np.zeros((len(seedlist),3))
-
-        j = 0
-        for seed in seedlist:
-            for i in range(3):
-                                
-                paradigm = 'tuning'+str(i+1)
-                
-                fulldict1 = s3.setup_and_run(paradigm=paradigm)
-                fulldict2 = s3.setup_and_run(pv_opto=.2,paradigm=paradigm)
-                fulldict3 = s3.setup_and_run(som_opto=1.,paradigm=paradigm)
-
-                # get rates
-                FR_control_pyr = s3.collect_FR(fulldict1['stim_arr'+str(i+1)],
-                                               fulldict1['stim_dt'],
-                                               fulldict1['defaultclock'],
-                                               fulldict1['spikemon_PYR2'].t,
-                                               fulldict1['n_pyr'])
-
-                FR_pv_pyr = s3.collect_FR(fulldict2['stim_arr'+str(i+1)],
-                                          fulldict2['stim_dt'],
-                                          fulldict2['defaultclock'],
-                                          fulldict2['spikemon_PYR2'].t,
-                                          fulldict2['n_pyr'])
-
-                FR_som_pyr = s3.collect_FR(fulldict3['stim_arr'+str(i+1)],
-                                           fulldict3['stim_dt'],
-                                           fulldict3['defaultclock'],
-                                           fulldict3['spikemon_PYR2'].t,
-                                           fulldict3['n_pyr'])
-
-                print 'paradigm',paradigm,'FR_control_pyr',FR_control_pyr
-                control1 = FR_control_pyr[0]
-                control2 = FR_control_pyr[-1]
-
-                pv1 = FR_pv_pyr[0]
-                pv2 = FR_pv_pyr[-1]
-
-                som1 = FR_som_pyr[0]
-                som2 = FR_som_pyr[-1]
-
-                #results_spike[i,:] = [control1,control2,pv1,pv2,som1,som2]
-                
-                #results[int(suffix)-1,:] = [control,pv_off,som_off]
-                results_ctrl1[j,i] = control1
-                results_pv1[j,i] = pv1
-                results_som1[j,i] = som1
-
-                results_ctrl2[j,i] = control2
-                results_pv2[j,i] = pv2
-                results_som2[j,i] = som2
-                
-            j += 1
-
-        np.savetxt(fname_ctrl1,results_ctrl1)
-        np.savetxt(fname_pv1,results_pv1)
-        np.savetxt(fname_som1,results_som1)
-
-        np.savetxt(fname_ctrl2,results_ctrl2)
-        np.savetxt(fname_pv2,results_pv2)
-        np.savetxt(fname_som2,results_som2)
-
-        
-    fig = plt.figure(figsize=(6,5))
-
-    ax11 = fig.add_subplot(221)
-    ax12 = fig.add_subplot(222)
-    ax21 = fig.add_subplot(223)
-    ax22 = fig.add_subplot(224)
-    #ax31 = fig.add_subplot(325)
-    #ax32 = fig.add_subplot(326)
-    
-    bar_width = 0.2
-
-    #ax11.set_title('Normalized Peak Response (2nd Tone)')
-
-    x = np.array([-1,0,1])
-    
-    #control_probe = results[1,0]
-    control_probe = 1
-    ax11.plot(x,results[:,0]/control_probe,label='Control',color='black',marker='o')
-
-    #pv_probe = results[1,2]
-    pv_probe = 1
-    ax11.plot(x,results[:,2]/pv_probe,label='PV Off',color=pv_color,marker='o',ls='--')
-    ax11.plot(x,results[:,4]/pv_probe,label='SOM Off',color=som_color,marker='o')
-
-    #ax12.set_title('Normalized Peak Response (2nd Tone)')
-
-    control_probe = 1#results[1,0]    
-    ax12.plot(x,results[:,1]/control_probe,color='black',marker='o')
-
-    som_probe = 1#results[1,4]
-    ax12.plot(x,results[:,3]/som_probe,color=pv_color,marker='o',ls='--')
-    ax12.plot(x,results[:,5]/som_probe,color=som_color,marker='o')
-
-    #ax21.scatter(results[:,2]-results[:,0],results[:,0]-results[:,1],color=pv_color)
-    #ax21.plot(results[:,3]-results[:,1],results[:,0]-results[:,1],color=pv_color)
-
-    #ax21.scatter(results[:,4]-results[:,0],results[:,0]-results[:,1],color=som_color)
-    #ax21.plot(results[:,5]-results[:,1],results[:,0]-results[:,1],color=som_color)
-
-    #print results_ctrl1,results_ctrl2
-
-    ctrl1_mean = np.mean(results_ctrl1,axis=0)
-    ctrl1_std = np.std(results_ctrl1,axis=0)
-
-    ctrl2_mean = np.mean(results_ctrl2,axis=0)
-    ctrl2_std = np.std(results_ctrl2,axis=0)
-
-
-    pv1_mean = np.mean(results_pv1,axis=0)
-    pv1_std = np.std(results_pv1,axis=0)
-
-    pv2_mean = np.mean(results_pv2,axis=0)
-    pv2_std = np.std(results_pv2,axis=0)
-
-    som1_mean = np.mean(results_som1,axis=0)
-    som1_std = np.std(results_som1,axis=0)
-
-    
-    som2_mean = np.mean(results_som2,axis=0)
-    som2_std = np.std(results_som2,axis=0)
-
-    
-
-    
-    ########################################## spike plots
-    ax21.plot(x,ctrl1_mean,c='k',marker='o')
-    ax21.errorbar(x,ctrl1_mean,yerr=ctrl1_std,c='k')
-
-    #ax22.errorbar(freqs,mean_som,yerr=std_som,label='SOM Off 2nd Tone',color=som_color,
-    #              lw=1, capsize=1, capthick=1,zorder=3) # plot SOM off over all tones
-
-
-    ax22.plot(x,ctrl2_mean,c='k',marker='o')
-    ax22.errorbar(x,ctrl2_mean,yerr=ctrl2_std,c='k')
-
-    
-    ax21.plot(x,pv1_mean,c=pv_color,marker='o',ls='--')
-    ax21.errorbar(x,pv1_mean,yerr=pv1_std,c=pv_color,ls='--')
-
-    ax22.plot(x,pv2_mean,c=pv_color,marker='o',ls='--')
-    ax22.errorbar(x,pv2_mean,yerr=pv2_std,c=pv_color,ls='--')
-
-    
-    ax21.plot(x,som1_mean,c=som_color,marker='o')
-    ax21.errorbar(x,som1_mean,yerr=som1_std,c=som_color)
-
-    ax22.plot(x,som2_mean,c=som_color,marker='o')
-    ax22.errorbar(x,som2_mean,yerr=som2_std,c=som_color)
-
-
-    #ax31.set_title(r'\textbf{E} Rate Model',x=0)
-    #ax31.plot(results[:,2]-results[:,0],results[:,0]-results[:,1])
-    #ax31.plot(results[:,3]-results[:,1],results[:,0]-results[:,1])
-
-    #ax32.set_title(r'\textbf{F} Spiking Model',x=0)
-    #ax32.plot(pv1_mean-ctrl1_mean,ctrl1_mean-ctrl2_mean)
-    #ax32.plot(pv2_mean-ctrl2_mean,ctrl1_mean-ctrl2_mean)
-
-    print pv2_mean-ctrl2_mean, ctrl1_mean-ctrl2_mean
-    
-    ax21.set_xlabel('Distance from Preferred Frequency')
-    ax22.set_xlabel('Distance from Preferred Frequency')
-
-    ax11.set_ylabel('Pyr FR (Rate Model)')
-    ax21.set_ylabel('Pyr FR (Spiking Model)')
-
-    
-    ax11.set_title(r'\textbf{A} $\quad$ Before Adaptation',x=.35)
-    ax12.set_title(r'\textbf{B} $\quad$ After Adaptation',x=.35)
-    ax21.set_title(r'\textbf{C}',x=0)
-    ax22.set_title(r'\textbf{D}',x=0)
-
-    ax11.set_ylim(0,.9)
-    ax12.set_ylim(0,.9)
-
-    ax21.set_ylim(1,11)
-    ax22.set_ylim(1,11)
-        
-    ax11.set_xticks(x)
-    ax12.set_xticks(x)
-    ax21.set_xticks(x)
-    ax22.set_xticks(x)
-
-    ax11.legend()
-    #ax12.legend()
-    
-    plt.tight_layout()
-    #plt.show()
-
-    return fig
 
 
 
@@ -4476,11 +2846,11 @@ def r3_s3_tuning_full(recompute=False):
     ax11.set_ylim(0,.6)
     ax21.set_ylim(0,.6)
 
-    ax13.set_ylim(0,.6)
-    ax23.set_ylim(0,.6)
+    ax13.set_ylim(-.1,.5)
+    ax23.set_ylim(-.1,.5)
 
-    ax12.set_ylim(1,11)
-    ax22.set_ylim(1,11)
+    ax12.set_ylim(1,10.5)
+    ax22.set_ylim(1,10.5)
 
     #ax23.set_ylim(0,11)
     #ax24.set_ylim(0,11)
@@ -4745,26 +3115,18 @@ def main():
         #(r1_responses,[],['r1_responses.pdf']), # try to combine some or all of these
         #(r3_responses,[],['r3_responses.pdf']),
         #(s1_responses,[],['s1_responses.pdf']),
-        #(s3_responses,[],['s3_responses.pdf']),        
 
         #(r1_adaptation,[],['r1_adaptation.pdf']),
+        
+        #(attentional,[],['attentional.pdf']),
 
-        #(r3_ssa,[],['r3_ssa.pdf']), # deprecated
-        #(s3_ssa,[],['s3_ssa.pdf']), # deprecated
         #(r3_CSI_params,[],['r3_CSI_params.pdf']),
         #(s3_CSI_params,[],['s3_CSI_params.pdf']),
 
-        #(r3_s3_ssa,[],['r3_s3_ssa.pdf']), # deprecated
-        #(r3_s3_fs,[],['r3_s3_fs.pdf']), # deprecated
-        #(r3_s3_tuning,[],['r3_s3_tuning.pdf']), # deprecated
-        #(r3_s3_pv,[],['r3_s3_pv.pdf']), # deprecated
-
-        #(r3_s3_ssa_full,[],['r3_s3_ssa_full.pdf']), 
-        #(r3_s3_fs_full,[],['r3_s3_fs_full.pdf']), 
-        #(r3_s3_tuning_full,[],['r3_s3_tuning_full.pdf']), 
-        (r3_s3_pv_full,[],['r3_s3_pv_full.pdf']), 
-
-        #(attentional,[],['attentional.pdf']),
+        (r3_s3_ssa_full,[False],['r3_s3_ssa_full.pdf']), 
+        (r3_s3_fs_full,[False],['r3_s3_fs_full.pdf']), 
+        (r3_s3_tuning_full,[False],['r3_s3_tuning_full.pdf']), 
+        (r3_s3_pv_full,[False],['r3_s3_pv_full.pdf']),         
         
         ]
 
