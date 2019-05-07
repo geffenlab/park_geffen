@@ -3112,16 +3112,16 @@ def generate_figure(function, args, filenames, title="", title_pos=(0.5,0.95)):
 def main():
 
     figures = [
-        #(r1_responses,[],['r1_responses.pdf']), # try to combine some or all of these
-        #(r3_responses,[],['r3_responses.pdf']),
-        #(s1_responses,[],['s1_responses.pdf']),
+        (r1_responses,[],['r1_responses.pdf']),
+        (r3_responses,[],['r3_responses.pdf']),
+        (s1_responses,[],['s1_responses.pdf']),
 
-        #(r1_adaptation,[],['r1_adaptation.pdf']),
+        (r1_adaptation,[],['r1_adaptation.pdf']),
         
-        #(attentional,[],['attentional.pdf']),
+        (attentional,[],['attentional.pdf']),
 
-        #(r3_CSI_params,[],['r3_CSI_params.pdf']),
-        #(s3_CSI_params,[],['s3_CSI_params.pdf']),
+        (r3_CSI_params,[],['r3_CSI_params.pdf']),
+        (s3_CSI_params,[],['s3_CSI_params.pdf']),
 
         (r3_s3_ssa_full,[False],['r3_s3_ssa_full.pdf']), 
         (r3_s3_fs_full,[False],['r3_s3_fs_full.pdf']), 
