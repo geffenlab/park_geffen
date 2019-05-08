@@ -347,7 +347,7 @@ def s1_responses():
     return fig
 
 
-def r3_s3_pv_full(recompute=False):
+def r3_s3_pv_full(recompute=True):
 
     ######################################### rate model
 
@@ -403,10 +403,10 @@ def r3_s3_pv_full(recompute=False):
     print "PV inact. corr = "+str(pearsonr(input_trace_short,pv_off['u2'][time<20]))
 
     ######################################### spiking model
-        
+    
     paradigm = 'pv'
-    #seedlist = np.arange(0,20,1)
-    seedlist = np.arange(0,10,1)
+    seedlist = np.arange(0,20,1)
+    #seedlist = np.arange(0,10,1)
     #seedlist = np.arange(0,2,1)
 
     # check if saved results exist
@@ -422,8 +422,9 @@ def r3_s3_pv_full(recompute=False):
 
     if os.path.isfile(fname_ctrl) and os.path.isfile(fname_pv) and os.path.isfile(fname_pv_on) and \
        os.path.isfile(fname_corr_ctrl) and os.path.isfile(fname_corr_pv) and os.path.isfile(fname_corr_pv_off) and \
-       os.path.isfile(fname_thal) and\
+       os.path.isfile(fname_thal) and \
        not(recompute):
+        print recompute,not(recompute)
         sol_ctrl_arr = np.loadtxt(fname_ctrl)
         sol_pv_arr = np.loadtxt(fname_pv)
         sol_pv_off = np.loadtxt(fname_pv_on)
@@ -450,7 +451,7 @@ def r3_s3_pv_full(recompute=False):
         for seed in seedlist:
             fulldict1 = s3.setup_and_run(paradigm=paradigm,seed=seed,dt=0.1) # control
             #fulldict1 = s3.setup_and_run(pv_opto=-.2,paradigm=paradigm) # PV act
-            fulldict2 = s3.setup_and_run(pv_opto=-.4,paradigm=paradigm,seed=seed,dt=0.1) # PV act
+            fulldict2 = s3.setup_and_run(pv_opto=-.1,paradigm=paradigm,seed=seed,dt=0.1) # PV act
             fulldict2Off = s3.setup_and_run(pv_opto=.5,paradigm=paradigm,seed=seed,dt=0.1) # PV act
 
             # generate PSTH from raster
@@ -531,6 +532,7 @@ def r3_s3_pv_full(recompute=False):
 
             diff_t_pv = (first_crossing_t_pv - stim_start_times[0])
             diff_t_pv = diff_t_pv[np.argmin(np.abs(diff_t_pv))]
+            #diff_t_pv = 0.
 
             print 'PV response delay',diff_t_pv
             sol_ctrl_arr[i,:] = psth_control(xx)
@@ -590,93 +592,47 @@ def r3_s3_pv_full(recompute=False):
     ax12 = plt.subplot(gs[:2,1])
     ax13 = plt.subplot(gs[:2,2])
     
-    #ax21 = plt.subplot(gs[1,0])
-    #ax22 = plt.subplot(gs[1,1])
-
     ax31 = plt.subplot(gs[-1,0])
     ax32 = plt.subplot(gs[-1,1])
-    ax33 = plt.subplot(gs[-1,2])
-    
-    
-    #ax2 = fig.add_subplot(312)
-    #ax3 = fig.add_subplot(313)
+    ax33 = plt.subplot(gs[-1,2])    
     
     ######################################### rate plots
 
     ax31.plot(time_short_ctrl*10,input_trace_short_ctrl,color='tab:red',zorder=0)
-    #ax11.set_zorder(ax11b.get_zorder()+1)
-    #ax11.patch.set_visible(False) # hide the 'canvas' 
-    ax11.plot(time_short_ctrl*10,pv_control['u2'][time_ctrl<20],color='k',lw=3,label='Control',zorder=3)
-    
+    ax11.plot(time_short_ctrl*10,pv_control['u2'][time_ctrl<20],color='k',lw=3,label='Control',zorder=3)    
     ax11.plot(time_short*10,pv_on['u2'][pv_on['t']<20],color=pv_color,lw=3,label='PV Act.',ls='--',zorder=4)
-
     
     ax33.plot(time_short_ctrl*10,input_trace_short_ctrl,color='tab:red')
     ax13.plot(time_short_ctrl*10,pv_control['u2'][time_ctrl<20],color='k',lw=2,label='Control')
-    ax13.plot(time_short*10,pv_off['u2'][pv_off['t']<20],color=pv_color,lw=3,label='PV Inact.',ls='--',zorder=3)
+    ax13.plot(time_short*10,pv_off['u2'][pv_off['t']<20],color=pv_color,lw=3,label='PV Inact.',ls='--',zorder=3)    
     
+    ######################################### spike plots    
     
-    #ax11.set_title('Pyr Control FR Rate')
+    ax12.plot(xx-40,ctrl_mean,label='Control',color='k',lw=2)
+    ax12.fill_between(xx-40,ctrl_mean-ctrl_dev,ctrl_mean+ctrl_dev,facecolor='k',alpha=.25)
     
-    #ax11b.set_ylabel('Thalamus',color='tab:red')
+    ax12.plot(xx-40,pv_mean,label='PV Act.',color=pv_color,lw=3,ls='--',zorder=3)
+    ax12.fill_between(xx-40,pv_mean-pv_dev,pv_mean+pv_dev,facecolor=pv_color,alpha=.25,zorder=3)
 
-
-    #ax11.set_title('Pyr FR Rate with PV Activation')
-    
-    
-    ######################################### spike plots
-    
-    
+    ax32.plot(thal_arr[:,0]-40,thal_arr[:,1],color='tab:red',label='Thalamus')
 
     
-    ax32.plot(thal_arr[:,0],thal_arr[:,1],color='tab:red',label='Thalamus')
-    
-    #ax11.plot(xx,psth_pv(xx+diff_t_pv),label='PV Act.',color=pv_color,lw=2)
-
-    ax12.plot(xx,ctrl_mean,label='Control',color='k',lw=2)
-    ax12.fill_between(xx,ctrl_mean-ctrl_dev,ctrl_mean+ctrl_dev,facecolor='k',alpha=.25)
-    
-    ax12.plot(xx,pv_mean,label='PV Act.',color=pv_color,lw=3,ls='--',zorder=3)
-    ax12.fill_between(xx,pv_mean-pv_dev,pv_mean+pv_dev,facecolor=pv_color,alpha=.25,zorder=3)
-
-
-    #ax22b.plot(thal_arr[:,0],thal_arr[:,1],color='tab:red',label='Thalamus')
-    
-    #ax11.plot(xx,psth_pv(xx+diff_t_pv),label='PV Act.',color=pv_color,lw=2)
-
-    #ax22.plot(xx,ctrl_mean,label='Control',color='k',lw=2)
-    #ax22.fill_between(xx,ctrl_mean-ctrl_dev,ctrl_mean+ctrl_dev,facecolor='k',alpha=.25)
-    
-    #ax22.plot(xx,pv_mean_off,label='PV Inact.',color=pv_color,lw=3,ls='--',zorder=3)
-    #ax22.fill_between(xx,pv_mean_off-pv_dev_off,pv_mean_off+pv_dev_off,facecolor=pv_color,alpha=.25,zorder=3)
-
-    
-    #ax2.scatter(fulldict1['spikemon_PYR2'].t/b2.ms, fulldict1['spikemon_PYR2'].i,color='k',s=1)
-    #ax3.scatter(fulldict2['spikemon_PYR2'].t/b2.ms-diff_t_pv, fulldict2['spikemon_PYR2'].i,color=pv_color,s=1)
-
     ax11.set_ylabel('Firing Rate')
     ax31.set_ylabel('Thalamus')
-    
-    
+        
     ax11.set_title(r'\textbf{A} Rate Model',x=0.3)
     ax12.set_title(r'\textbf{B} Spiking Model',x=0.3)
     ax13.set_title(r'\textbf{C} Rate Model (Prediction)',x=0.5)
-    #ax2.set_title(r'\textbf{B}',x=0.5)
-    #ax3.set_title(r'\textbf{C}',x=0.5)
-    #
-    #ax11b.tick_params(axis='y',labelcolor='tab:red')
-    #ax12b.tick_params(axis='y',labelcolor='tab:red')
-    #ax13b.tick_params(axis='y',labelcolor='tab:red')
-    #ax22b.tick_params(axis='y',labelcolor='tab:red')
 
     ax12.set_xlim(0,xx[-1])
 
     ax11.set_xlim(80,150)
-    ax12.set_xlim(120,190)
+    #ax12.set_xlim(120,190)
+    ax12.set_xlim(80,150)
     ax13.set_xlim(80,150)
 
     ax31.set_xlim(80,150)
-    ax32.set_xlim(120,190)
+    ax32.set_xlim(80,150)
     ax33.set_xlim(80,150)
 
     
@@ -1704,25 +1660,24 @@ def r3_s3_fs_full(recompute=False):
     print mean_ctrl,mean_pv,mean_som
     print std_ctrl,std_pv,std_som
 
-    shift = 0.02
+    shift = 0.05
     
     #ax12.set_title('Normalized Peak Response (2nd Tone)')
-    ax12.plot(freqs,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize) # plot control over all tones
+    #ax12.plot(freqs,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize) # plot control over all tones
     ax12.errorbar(freqs,mean_ctrl,yerr=std_ctrl,label='Control',color='black',
-             lw=1, capsize=1, capthick=1) # plot control over all tones
+             lw=2, capsize=2, capthick=1) # plot control over all tones
 
-    ax12.plot(freqs+shift,mean_pv,color=pv_color,lw=2,marker=marker,markersize=markersize,ls='--')
+    #ax12.plot(freqs+shift,mean_pv,color=pv_color,lw=2,marker=marker,markersize=markersize,ls='--')
     ax12.errorbar(freqs+shift,mean_pv,yerr=std_pv,label='PV Inact.',color=pv_color,
-                  lw=1, capsize=1, capthick=1,zorder=3,ls='--') # plot PV off over all tones
-
+                  lw=2, capsize=2, capthick=1,zorder=3,ls='--') # plot PV off over all tones
     
-    ax22.plot(freqs,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize)
+    #ax22.plot(freqs,mean_ctrl,color='k',lw=2,marker=marker,markersize=markersize)
     ax22.errorbar(freqs,mean_ctrl,yerr=std_ctrl,label='Control',color='black',
-             lw=1, capsize=1, capthick=1) # plot control over all tones
+             lw=2, capsize=2, capthick=1) # plot control over all tones
 
-    ax22.plot(freqs+shift,mean_som,color=som_color,lw=2,marker=marker,markersize=markersize)
+    #ax22.plot(freqs+shift,mean_som,color=som_color,lw=2,marker=marker,markersize=markersize)
     ax22.errorbar(freqs+shift,mean_som,yerr=std_som,label='SOM Inact.',color=som_color,
-                  lw=1, capsize=1, capthick=1,zorder=3) # plot SOM off over all tones
+                  lw=2, capsize=2, capthick=1,zorder=3) # plot SOM off over all tones
 
 
         
@@ -2843,8 +2798,8 @@ def r3_s3_tuning_full(recompute=False):
     ax33.spines['right'].set_visible(False)
     
     
-    ax11.set_ylim(0,.6)
-    ax21.set_ylim(0,.6)
+    ax11.set_ylim(0,.45)
+    ax21.set_ylim(0,.45)
 
     ax13.set_ylim(-.1,.5)
     ax23.set_ylim(-.1,.5)
@@ -3097,6 +3052,13 @@ def attentional():
     return fig
 
 
+def transition():
+    """
+    figure showing transition of SSA results over 15 sec.
+    """
+    
+    
+
 def generate_figure(function, args, filenames, title="", title_pos=(0.5,0.95)):
 
     fig = function(*args)
@@ -3112,21 +3074,24 @@ def generate_figure(function, args, filenames, title="", title_pos=(0.5,0.95)):
 def main():
 
     figures = [
-        (r1_responses,[],['r1_responses.pdf']),
-        (r3_responses,[],['r3_responses.pdf']),
-        (s1_responses,[],['s1_responses.pdf']),
+        (r1_responses,[],['r1_responses.pdf']), # Fig 1
+        (r3_responses,[],['r3_responses.pdf']), # Fig 2
 
-        (r1_adaptation,[],['r1_adaptation.pdf']),
+        (attentional,[],['attentional.pdf']), # Fig 3
         
-        (attentional,[],['attentional.pdf']),
+        (s1_responses,[],['s1_responses.pdf']), # Fig 4
 
-        (r3_CSI_params,[],['r3_CSI_params.pdf']),
-        (s3_CSI_params,[],['s3_CSI_params.pdf']),
+        (r1_adaptation,[],['r1_adaptation.pdf']), # Fig 6
+        
+        (r3_CSI_params,[],['r3_CSI_params.pdf']), # Fig 8
+        (s3_CSI_params,[],['s3_CSI_params.pdf']), # Fig 9
 
-        (r3_s3_ssa_full,[False],['r3_s3_ssa_full.pdf']), 
-        (r3_s3_fs_full,[False],['r3_s3_fs_full.pdf']), 
-        (r3_s3_tuning_full,[False],['r3_s3_tuning_full.pdf']), 
-        (r3_s3_pv_full,[False],['r3_s3_pv_full.pdf']),         
+        (r3_s3_ssa_full,[False],['r3_s3_ssa_full.pdf']),  # Fig 7
+        (r3_s3_fs_full,[False],['r3_s3_fs_full.pdf']), # Fig 10
+        (r3_s3_tuning_full,[False],['r3_s3_tuning_full.pdf']), # Fig 11
+        (r3_s3_pv_full,[False],['r3_s3_pv_full.pdf']), # Fig 12
+
+        #(transition,[],['transition.pdf']),
         
         ]
 
