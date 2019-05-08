@@ -18,12 +18,17 @@
 
 %\end{abstract}
 
+\section{Introduction}
+The primary tools of this paper are Python (with numpy, scipy, matplotlib), XPPAUTO (XPPAUT or XPP for short) \cite{ermentrout2002simulating}, a Python binding for XPP, \y{Py\_XPPCALL} \cite{xppy}, and Brian2 \cite{Stimberg595710}. Please contact me with any questions about these programs: \y{ympark1988@gmail.com}\footnote{I used XPP extensively in my PhD, and XPP was created by and continues to be developed by Bard Ermentrout, my doctoral advisor. In addition, I am one of the primary contributors to \y{Py\_XPPCALL}.}.
+
+I highly recommend using Ubuntu, since the most stable versions of XPP are currently on Ubuntu. At the time of writing, I have used Ubuntu 16.04 (Python 2.7.12, numpy 1.15.2, scipy 1.1.0, matplotlib 2.2.3), Ubuntu 18.04.2 (Python 2.7.15rc1, numpy 1.15.2, scipy 1.1.0, matplotlib 2.2.3), and XPPAUT version 8 to successfully run all code.
+
 \section{Rate Models}
 
-Rate models are implemented in XPPAUTO. In order to plot the simulations, I run XPPAUTO through a Python binding \cite{xppy}. I highly recommend using Ubuntu, since the most stable versions of XPPAUTO are currently on Ubuntu. At the time of writing, I have used Ubuntu 16.04 (Python 2.7.12, numpy 1.15.2, scipy 1.1.0, matplotlib 2.2.3) and 18.04.2 (Python 2.7.15rc1, numpy 1.15.2, scipy 1.1.0, matplotlib 2.2.3), XPPAUT version 8 to successfully run all code.
+Rate models are implemented in XPPAUTO. In order to plot the simulations, I run XPPAUTO through the Python binding \y{Py\_XPPCALL}. 
 
 \subsection{XPPAUTO}
-All rate models were implemented in \texttt{XPPAUTO} (X-Phase Plane + AUTO) for convenience \cite{ermentrout2002simulating}. XPP auto uses an almost plain-text file format for simulating ordinary differential equations (ODEs). There is extensive documentation on XPPAUTO on Bard's website:
+All rate models were implemented in \texttt{XPPAUTO} for convenience. XPP auto uses an almost plain-text file format for simulating ordinary differential equations (ODEs). There is extensive documentation on XPPAUTO on Bard's website:
 \url{http://www.math.pitt.edu/~bard/xpp/help/xppodes.html}. The linked page provides full documentation of ode file syntax. XPPAUTO also comes with a graphical user interface (GUI), but this will not be needed for this documentation. The XPP .ode files for this project are located in the directory \url{https://github.com/geffenlab/park_geffen/rate_models/xpp}.
 
 Let us take a look at one of the ode files, \texttt{cols3\_fs.ode}, which is the three-unit rate model for the forward suppression paradigm. The file begins with a function definition and a bunch of parameters:
@@ -188,10 +193,26 @@ The remaining lines are mostly related to using the XPPAUTO GUI. Choices that af
 \y{bounds} is simply the maximum possible value of any solution before XPPAUTO gives up. \y{maxstor} sets the max storage XPPAUTO is allowed to take from memory. \y{total} is the total time of the simulation, and \y{dt} is the time step.
 
 \subsection{Python Visualization}
-These XPPAUTO files (XPP for short) are run using Python. 
+These XPP ode files can be run using the XPP GUI, but we will run them using Python using \y{Py\_XPPCALL}. I have tried to include enough documentation to help users understand the basics \url{https://github.com/youngmp/Py_XPPCALL}. The Python files that run the XPP files are are located in \url{https://github.com/geffenlab/park_geffen/rate_models}. The Python file that reads the ODE file from the example above is called \y{cols3\_fs.py}. You should be able to run the python file directly.
+\begin{verbatim}
+$ python cols3_fs.py
+\end{verbatim}
+There will be lots of text that appears. These were mostly for debugging purposes and can be turned off by commenting the print statements in this file and in \y{xppcall.py}. After the script runs, a few plots should appear. I like to set up the plotting framework in the individual Python files before finalizing them in \y{generate\_figures.py}.
+
+The \y{main} function calls all the relevant files. In brief, the loop runs three different stimulus patterns. The first stimulates the left unit then the center unit with 50ms tones and a 20ms inter-stimulus-interval. The second stimulates the center unit twice with the same time intervals. The third stimulates the right unit then the center unit with the same time intervals. This is a simple version of the forward suppression paradigm. These three sets of stimuli are repeated for PV inactivation and SOM inactivation. The max firing rate response is then recorded into a matrix and plotted.
+
+Much of this logic appears in its final form in the function \y{r3\_s3\_fs\_full} in \y{generate\_figures.py}. The difference is that the function \y{r3\_s3\_fs\_full} includes the spiking model simulation and plots. I've tried to comment on most things... Let me know if you have any questions.
+
+The remaining Python files for simulating the rate model, \y{cols3\_ssa} and \y{natan2015\_simple\_linear} have a similar construction. The \y{main} function in each script contains all the preliminary plotting/visualization code, which you can use to tinker and learn the ins and outs of the python/xpp interface. Seriously, play with those all you want.
+
+The final version of the plotting functions appear in \y{generate\_figures.py}. Don't change those unless you're familiar with the code.
 
 
 \section{Spiking Models}
+
+\section{Generating Figures}
+
+\y{generate\_figures.py} is the master plotting function for the paper. Most figure papers are generated here, except for a couple that were created in Inkscape. This file serves as a technical documentation of the code. In the main function, comments note which function belong to which figure.
 
 \begin{thebibliography}{1}
 
@@ -212,6 +233,11 @@ Ryan~G Natan, John~J Briguglio, Laetitia Mwilambwe-Tshilobo, Sara~I Jones, Mark
 Ilya Prokin and Youngmin Park.
 \newblock Pyxppcall.
 \newblock \url{https://github.com/iprokin/Py_XPPCALL}, 2017.
+
+\bibitem{Stimberg595710}
+Marcel Stimberg, Romain Brette, and Dan F.~M. Goodman.
+\newblock Brian 2: an intuitive and efficient neural simulator.
+\newblock {\em bioRxiv}, 2019.
 
 \bibitem{tsodyks1997neural}
 Misha~V Tsodyks and Henry Markram.
