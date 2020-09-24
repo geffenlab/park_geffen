@@ -1,5 +1,5 @@
 # park_geffen
-Public repository for the paper "A Unifying Mechanistic Model of the Auditory Cortex with Inhibitory Subtypes" by Youngmin Park and Maria N. Geffen. Submitted to ELife
+Public repository for the paper "A Circuit Model of Auditory Cortex" by Youngmin Park and Maria N. Geffen. Published in PLOS Computational Biology https://journals.plos.org/ploscompbiol/article/related?id=10.1371/journal.pcbi.1008016
 
 run
 ```generate_figures.py```
